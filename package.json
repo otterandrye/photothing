@@ -1,0 +1,15 @@
+{
+  "name": "photothing",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:otterandrye/photothing.git",
+  "author": "<marcusdarmstrong@gmail.com>",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "4.16.3"
+  }
+}
