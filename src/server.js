@@ -9,6 +9,16 @@ import upload from "./upload";
 const port = process.env.PORT || 3000;
 const app = express();
 
+function env(key): string {
+  const value = process.env[key];
+  if (typeof value !== "string") {
+    console.error(`missing environment variable ${key}`);
+    process.exit(1);
+    return ""; // unreachable
+  }
+  return value;
+}
+
 app.set("x-powered-by", false);
 app.get("/", (req, res) =>
   res.send(
@@ -21,7 +31,8 @@ app.get("/", (req, res) =>
 app.use("/static", express.static("dist"));
 
 // signed upload tutorial code starts here
-const { S3_REGION, S3_BUCKET_NAME } = process.env;
+const S3_REGION = env("S3_REGION");
+const S3_BUCKET_NAME = env("S3_BUCKET_NAME");
 aws.config.region = S3_REGION;
 
 console.log(`s3 bucket: ${S3_BUCKET_NAME}`);
@@ -30,8 +41,8 @@ app.get("/upload", (_, res) =>
   res.send(
     upload({
       bucket: S3_BUCKET_NAME,
-      id: process.env.AWS_ACCESS_KEY_ID,
-      secret: process.env.AWS_SECRET_ACCESS_KEY,
+      id: env("AWS_ACCESS_KEY_ID"),
+      secret: env("AWS_SECRET_ACCESS_KEY"),
     }),
   ),
 );

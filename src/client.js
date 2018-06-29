@@ -1,5 +1,7 @@
-// @flow
 /* eslint no-alert: 0 */
+/* eslint flowtype/require-valid-file-annotation: 0 */
+// :-P sorry
+// given it's PoC code not worth making flow happy on document.getElement calls
 
 console.log("Hello World, from the client side JS");
 
@@ -46,8 +48,9 @@ function getSignedRequest(file) {
 (() => {
   document.getElementById("file-input").onchange = () => {
     console.log("file input onchange fired");
-    const { files } = document.getElementById("file-input");
-    const file = files[0];
+    const input = document.getElementById("file-input");
+    const files = input && input.files;
+    const file = files && files[0];
     if (file == null) {
       alert("No file selected.");
     }

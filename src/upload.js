@@ -1,6 +1,12 @@
 // @flow
 
-export default ({ bucket, id, secret }) => `
+type Aws = {
+  bucket: string,
+  id: string,
+  secret: string,
+};
+
+export default ({ bucket, id, secret }: Aws) => `
   <!doctype html>
     <html>
     <body>
@@ -20,3 +26,4 @@ export default ({ bucket, id, secret }) => `
     </body>
   </html>
 `;
+// bucket: string, id: string, secret: string
