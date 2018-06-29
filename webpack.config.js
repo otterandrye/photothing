@@ -4,6 +4,14 @@ const nodeExternals = require('webpack-node-externals');
 const modules = {
   rules: [
     {
+      test: /\.js$/,
+      exclude: /node_modules/,
+      loader: "babel-loader",
+      options: {
+        presets: ['@babel/preset-env', "@babel/preset-flow", "@babel/preset-react"],
+      }
+    },
+    {
       enforce: "pre",
       test: /\.js$/,
       exclude: /node_modules/,
@@ -15,13 +23,14 @@ const modules = {
       }
     },
     {
-      test: /\.js$/,
+      enforce: 'pre',
+      test: /\.js?$/,
+      loader: 'prettier-loader',
       exclude: /node_modules/,
-      loader: "babel-loader",
       options: {
-        presets: ['@babel/preset-env', "@babel/preset-flow", "@babel/preset-react"],
+        parser: "babylon",
       }
-    },
+    }
   ],
 };
 
