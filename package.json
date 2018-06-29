@@ -15,6 +15,7 @@
     "format": "prettier --write \"src/**/*.js\""
   },
   "dependencies": {
+    "aws-sdk": "2.266.1",
     "express": "4.16.3"
   },
   "devDependencies": {
