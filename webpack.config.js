@@ -1,5 +1,6 @@
 const path = require('path');
 const nodeExternals = require('webpack-node-externals');
+const FlowWebpackPlugin = require('flow-webpack-plugin');
 
 const modules = {
   rules: [
@@ -34,6 +35,9 @@ const modules = {
   ],
 };
 
+const plugins = [
+  new FlowWebpackPlugin(),
+];
 
 module.exports = [
 	{
@@ -44,7 +48,8 @@ module.exports = [
 	  output: {
 	    filename: 'server.js',
 	    path: path.resolve(__dirname, 'dist')
-	  }
+	  },
+    plugins
 	},
 	{
 		entry: './src/client.js',
@@ -52,6 +57,7 @@ module.exports = [
 		output: {
 			filename: 'client.js',
 			path: path.resolve(__dirname, 'dist')
-		}
+		},
+    plugins
 	}
 ];
