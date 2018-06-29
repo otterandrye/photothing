@@ -37,15 +37,7 @@ aws.config.region = S3_REGION;
 
 console.log(`s3 bucket: ${S3_BUCKET_NAME}`);
 
-app.get("/upload", (_, res) =>
-  res.send(
-    upload({
-      bucket: S3_BUCKET_NAME,
-      id: env("AWS_ACCESS_KEY_ID"),
-      secret: env("AWS_SECRET_ACCESS_KEY"),
-    }),
-  ),
-);
+app.get("/upload", (_, res) => res.send(upload(S3_BUCKET_NAME)));
 
 app.get("/sign-s3", (req, res) => {
   const s3 = new aws.S3();
