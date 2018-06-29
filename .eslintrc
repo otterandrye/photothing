@@ -1,0 +1,19 @@
+{
+  "plugins": ["flowtype"],
+  "extends": ["airbnb", "plugin:flowtype/recommended", "prettier"],
+  "parser": "babel-eslint",
+  "env": {
+    "browser": true,
+    "node": true
+  },
+  "rules": {
+    "no-console": 0,
+    "flowtype/require-valid-file-annotation": [
+      2,
+      "always",
+      {
+        "annotationStyle": "line"
+      }
+    ]
+  }
+}
