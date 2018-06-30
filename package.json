@@ -7,7 +7,7 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "start": "node dist/server.js",
+    "start": "node -r dotenv/config dist/server.js",
     "postinstall": "yarn build:production",
     "build": "webpack --mode development",
     "build:production": "webpack --mode production",
@@ -17,16 +17,19 @@
   },
   "dependencies": {
     "aws-sdk": "2.266.1",
-    "express": "4.16.3"
+    "dotenv": "6.0.0",
+    "express": "4.16.3",
+    "react": "16.4.1",
+    "react-dom": "16.4.1"
   },
   "devDependencies": {
     "@babel/core": "7.0.0-beta.51",
     "@babel/preset-env": "7.0.0-beta.51",
     "@babel/preset-flow": "7.0.0-beta.51",
     "@babel/preset-react": "7.0.0-beta.51",
-    "add": "2.0.6",
     "babel-eslint": "8.2.5",
     "babel-loader": "8.0.0-beta.4",
+    "css-loader": "0.28.11",
     "eslint": "5.0.1",
     "eslint-config-airbnb": "17.0.0",
     "eslint-config-prettier": "2.9.0",
@@ -37,6 +40,7 @@
     "eslint-plugin-react": "7.10.0",
     "flow-bin": "0.75.0",
     "flow-webpack-plugin": "1.2.0",
+    "mini-css-extract-plugin": "0.4.1",
     "prettier": "1.13.7",
     "prettier-loader": "2.1.1",
     "webpack": "4.13.0",

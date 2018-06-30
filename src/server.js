@@ -2,12 +2,15 @@
 
 import express from "express";
 import aws from "aws-sdk";
+import * as React from "react";
+import ReactDomServer from "react-dom/server";
 
-import template from "./template";
+// import template from "./template";
 import upload from "./upload";
+import App from "./app";
 
 const port = process.env.PORT || 3000;
-const app = express();
+const server = express();
 
 function env(key): string {
   const value = process.env[key];
@@ -19,25 +22,30 @@ function env(key): string {
   return value;
 }
 
-app.set("x-powered-by", false);
-app.get("/", (req, res) =>
-  res.send(
-    template({
-      title: "Photo Thing!",
-      body: "Hello World with HTML",
-    }),
-  ),
-);
-app.use("/static", express.static("dist"));
+server.set("x-powered-by", false);
+server.get("/", (req, res) => {
+  res.write("<!doctype html><html>");
+  const stream = ReactDomServer.renderToNodeStream(
+    <App scripts={["static/client.js"]} styles={["static/main.css"]} />,
+  );
+  stream.pipe(
+    res,
+    { end: false },
+  );
+  stream.on("end", () => {
+    res.end("</html>");
+  });
+});
+server.use("/static", express.static("dist"));
 
 // signed upload tutorial code starts here
 const S3_REGION = env("S3_REGION");
 const S3_BUCKET_NAME = env("S3_BUCKET_NAME");
 aws.config.region = S3_REGION;
 
-app.get("/upload", (_, res) => res.send(upload(S3_BUCKET_NAME)));
+server.get("/upload", (_, res) => res.send(upload(S3_BUCKET_NAME)));
 
-app.get("/sign-s3", (req, res) => {
+server.get("/sign-s3", (req, res) => {
   const s3 = new aws.S3();
   const fileName = req.query["file-name"];
   const fileType = req.query["file-type"];
@@ -65,4 +73,6 @@ app.get("/sign-s3", (req, res) => {
 
 // and ends here
 
-app.listen(port, () => console.log(`Photo thing listening on port ${port}!`));
+server.listen(port, () =>
+  console.log(`Photo thing listening on port ${port}!`),
+);

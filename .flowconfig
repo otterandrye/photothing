@@ -12,5 +12,6 @@ src
 esproposal.optional_chaining=enable
 esproposal.nullish_coalescing=enable
 experimental.const_params=true
+module.name_mapper='.*(.css)' -> '{}'
 
 [strict]
