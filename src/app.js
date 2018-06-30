@@ -1,32 +1,34 @@
 // @flow
 
 import * as React from "react";
-import classes from "./app.css";
+import styles from "./app.css";
 
-type Props = {|
+type Manifest = {|
   +styles: string[],
   +scripts: string[],
 |};
 
-export default ({ styles, scripts }: Props) => (
+export default (manifest: Manifest) => (
   <React.Fragment>
     <head lang="en">
       <meta charSet="utf-8" />
       <title>title</title>
-      {styles.map(style => <link href={style} rel="stylesheet" key={style} />)}
+      {manifest.styles.map(style => (
+        <link href={style} rel="stylesheet" key={style} />
+      ))}
     </head>
     <body lang="en">
-      <div className={classes.pretty}>body text</div>
+      <div className={styles.pretty}>body text</div>
       {/* eslint-disable react/no-danger */}
       <script
         dangerouslySetInnerHTML={{
-          __html: `SCRIPTS = ${JSON.stringify(
-            scripts,
-          )}; STYLES = ${JSON.stringify(styles)};`,
+          __html: `MANIFEST=${JSON.stringify(manifest)};`,
         }}
       />
       {/* eslint-enable react/no-danger */}
-      {scripts.map(script => <script src={script} key={script} async />)}
+      {manifest.scripts.map(script => (
+        <script src={script} key={script} async />
+      ))}
     </body>
   </React.Fragment>
 );

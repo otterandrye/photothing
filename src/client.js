@@ -64,8 +64,5 @@ function getSignedRequest(file) {
 
 // end of upload test nonsense
 if (!document.getElementById("file-input")) {
-  ReactDom.hydrate(
-    <App scripts={window.SCRIPTS} styles={window.STYLES} />,
-    document.documentElement,
-  );
+  ReactDom.hydrate(<App {...window.MANIFEST} />, document.documentElement);
 }
