@@ -5,7 +5,6 @@ import aws from "aws-sdk";
 import * as React from "react";
 import ReactDomServer from "react-dom/server";
 
-// import template from "./template";
 import upload from "./upload";
 import App from "./app";
 
