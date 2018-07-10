@@ -6,7 +6,7 @@ import * as React from "react";
 import ReactDomServer from "react-dom/server";
 
 import upload from "./upload";
-import App from "./app";
+import Page from "./Page";
 
 const port = process.env.PORT || 3000;
 const server = express();
@@ -25,7 +25,7 @@ server.set("x-powered-by", false);
 server.get("/", (req, res) => {
   res.write("<!doctype html><html>");
   const stream = ReactDomServer.renderToNodeStream(
-    <App scripts={["static/client.js"]} styles={["static/main.css"]} />,
+    <Page scripts={["static/client.js"]} styles={["static/main.css"]} />,
   );
   stream.pipe(
     res,

@@ -1,0 +1,12 @@
+.frame {
+  width: 10em;
+  height: 10em;
+  line-height: 10em;
+  background-color: black;
+  text-align: center;
+}
+
+.frame img {
+  vertical-align: middle;
+  margin-top: -3px;
+}

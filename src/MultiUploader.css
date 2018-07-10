@@ -1,0 +1,96 @@
+.hidden {
+  display: none;
+}
+
+.dropBox {
+  border: 5px dashed #ccc;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  padding: 4em;
+  box-sizing: border-box;
+}
+
+.button {
+  display: inline-block;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+  padding: 0.5em 0.75em;
+  border-radius: 2px;
+  margin: 0.5em 0.75em;
+  cursor: pointer;
+}
+
+.button:hover {
+  border-color: #6464ff;
+}
+
+.upload {
+  border: 1px solid #ccc;
+  padding: 0.5em;
+  display: inline-block;
+  margin: 0.5em;
+  border-radius: 2px;
+  position: relative;
+}
+
+.meta {
+  margin-top: 0.5em;
+}
+
+.name {
+  margin-bottom: 0.25em;
+}
+
+.size {
+  color: #555;
+}
+
+.uploads {
+  margin: 0.5em -0.5em;
+}
+
+.x {
+  cursor: pointer;
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  font-size: 2em;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 0.5em;
+  height: 0.75em;
+  width: 0.75em;
+  vertical-align: -20px;
+  line-height: 20px;
+  text-align: center;
+  font-weight: 300;
+  color: #ffaa7d;
+}
+
+.uploadButton {
+  font-size: smaller;
+  border: 1px solid #5dcc3c;
+  display: inline-block;
+  float: right;
+  padding: 0.25em 0.5em;
+  border-radius: 2px;
+  color: white;
+  font-weight: 100;
+  background-color: #58b23d;
+  cursor: pointer;
+}
+
+.uploadButton:hover {
+  border: 1px solid #58b23d;
+  background-color: #5dcc3c;
+}
+
+.uploadStatus {
+  float: right;
+  font-size: smaller;
+  font-weight: bold;
+  display: inline-block;
+  margin: 0.25em 0.5em;
+  padding-top: 1px;
+}

@@ -1,6 +1,6 @@
 import * as React from "react";
 import ReactDom from "react-dom";
-import App from "./app";
+import Page from "./Page";
 
 /* eslint no-alert: 0 */
 /* eslint flowtype/require-valid-file-annotation: 0 */
@@ -64,5 +64,5 @@ function getSignedRequest(file) {
 
 // end of upload test nonsense
 if (!document.getElementById("file-input")) {
-  ReactDom.hydrate(<App {...window.MANIFEST} />, document.documentElement);
+  ReactDom.hydrate(<Page {...window.MANIFEST} />, document.documentElement);
 }
