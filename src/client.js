@@ -12,18 +12,15 @@ console.log("Hello World, from the client side JS");
 // upload test nonsense here
 // https://devcenter.heroku.com/articles/s3-upload-node
 
-function uploadFile(file, signedRequest, url) {
-  console.log(`file upload started to ${url}`);
+function uploadFile(file, uploadResponse) {
+  console.log(`file upload started to ${uploadResponse.url}`);
   const xhr = new XMLHttpRequest();
-  xhr.open("PUT", signedRequest);
+  xhr.open("PUT", uploadResponse.url);
   xhr.onreadystatechange = () => {
     if (xhr.readyState === 4) {
       if (xhr.status === 200) {
-        // NB: this points to the raw S3 bucket url e.g.
-        // https://photothing-dev.s3.us-east-2.amazonaws.com/troll.jpg
-        // which we eventually want to route through cloudfront instead
-        // NB: only the dev bucket is set to serve its contents via http(s)
-        document.getElementById("preview").src = url;
+        // NB: this only works in dev until we hook up cloudfront. api form won't change tho
+        document.getElementById("preview").src = uploadResponse.get_url;
       } else {
         alert("Could not upload file.");
       }
@@ -35,12 +32,15 @@ function uploadFile(file, signedRequest, url) {
 function getSignedRequest(file) {
   console.log(`getting signed request for ${file.name}`);
   const xhr = new XMLHttpRequest();
-  xhr.open("GET", `/sign-s3?file-name=${file.name}&file-type=${file.type}`);
+  xhr.open("POST", "http://localhost:8000/api/upload");
+  xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+  xhr.send(JSON.stringify({ filename: file.name, file_type: file.type }));
   xhr.onreadystatechange = () => {
     if (xhr.readyState === 4) {
       if (xhr.status === 200) {
         const response = JSON.parse(xhr.responseText);
-        uploadFile(file, response.signedRequest, response.url);
+        console.log(`got json response from rust: ${xhr.responseText}`);
+        uploadFile(file, response);
       } else {
         alert("Could not get signed URL.");
       }
