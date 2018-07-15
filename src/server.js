@@ -35,6 +35,8 @@ server.get("/", (req, res) => {
     res.end("</html>");
   });
 });
+
+express.static.mime.define({ "application/wasm": ["wasm"] });
 server.use("/static", express.static("dist"));
 
 // signed upload tutorial code starts here

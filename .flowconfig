@@ -1,10 +1,12 @@
 [ignore]
 <PROJECT_ROOT>/dist
+<PROJECT_ROOT>/editor-backend
 
 [include]
 src
 
 [libs]
+flow-typed
 
 [lints]
 

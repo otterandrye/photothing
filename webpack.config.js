@@ -7,17 +7,17 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const rules = [
   {
     test: /\.js$/,
-    exclude: /node_modules/,
+    exclude: /node_modules|editor-backend/,
     loader: "babel-loader",
     options: {
       presets: ['@babel/preset-env', "@babel/preset-flow", "@babel/preset-react"],
-      plugins: ['@babel/plugin-proposal-class-properties'],
+      plugins: ['@babel/plugin-proposal-class-properties', '@babel/plugin-syntax-dynamic-import'],
     }
   },
   {
     enforce: "pre",
     test: /\.js$/,
-    exclude: /node_modules/,
+    exclude: /node_modules|editor-backend/,
     loader: "eslint-loader",
     options: {
       emitError: true,
@@ -29,7 +29,7 @@ const rules = [
     enforce: 'pre',
     test: /\.(js)$/,
     loader: 'prettier-loader',
-    exclude: /node_modules/,
+    exclude: /node_modules|editor-backend/,
     options: {
       parser: "babylon",
     }
@@ -38,7 +38,7 @@ const rules = [
     enforce: 'pre',
     test: /\.(css)$/,
     loader: 'prettier-loader',
-    exclude: /node_modules/,
+    exclude: /node_modules|editor-backend/,
     options: {
       parser: "css",
     }
@@ -76,9 +76,17 @@ const plugins = [
   new FlowWebpackPlugin(),
 ];
 
+const resolve = {
+  alias: {
+    'editor-backend': path.resolve(__dirname, './editor-backend/editor_backend.js'),
+    'editor-backend-wasm': path.resolve(__dirname, './editor-backend/editor_backend_bg.wasm'),
+  }
+}
+
 module.exports = [
 	{
 	  entry: './src/server.js',
+    resolve,
     target: 'node',
     externals: [nodeExternals()],
     module: {
@@ -93,16 +101,19 @@ module.exports = [
       new webpack.DefinePlugin({
         'SERVER': JSON.stringify(true),
       }),
-    ]
+    ],
+    devtool: 'source-map',
 	},
 	{
 		entry: './src/client.js',
+    resolve,
     module: {
       rules: clientRules,
     },
 		output: {
 			filename: 'client.js',
-			path: path.resolve(__dirname, 'dist')
+			path: path.resolve(__dirname, 'dist'),
+      publicPath: 'static/',
 		},
     plugins: [
       ...plugins,
@@ -110,6 +121,7 @@ module.exports = [
         'SERVER': JSON.stringify(false),
       }),
       new MiniCssExtractPlugin()
-    ]
+    ],
+    devtool: 'source-map',
 	}
 ];
