@@ -8,10 +8,10 @@ before_install:
 
 language: node_js
 node_js:
-   - "10.5"
-cache: yarn
-rust:
-  - nightly
+  - "10.5"
+cache:
+  - yarn
+  - cargo
 
 notifications:
   email: false
