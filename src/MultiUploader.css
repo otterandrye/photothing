@@ -68,6 +68,15 @@
   color: #ffaa7d;
 }
 
+.edit {
+  cursor: pointer;
+  position: absolute;
+  top: 7px;
+  right: 12px;
+  font-size: 2em;
+  color: white;
+}
+
 .uploadButton {
   font-size: smaller;
   border: 1px solid #5dcc3c;

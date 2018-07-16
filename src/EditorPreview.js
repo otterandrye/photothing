@@ -2,11 +2,12 @@
 
 import * as React from "react";
 
-type Props = {
+type Props = {|
+  input: File,
   height: number,
   width: number,
   scale: number,
-};
+|};
 
 export default class EditorPreview extends React.Component<Props> {
   canvas: { current: null | HTMLCanvasElement } = React.createRef();
@@ -30,25 +31,31 @@ export default class EditorPreview extends React.Component<Props> {
           this.getVPixelHeight(),
           this.getVPixelWidth(),
         );
-        const imageData = new ImageData(
-          new Uint8ClampedArray(
-            memory.buffer,
-            preview.pixels(),
-            this.getVPixelCount() * 4,
-          ),
-          this.getVPixelHeight(),
-          this.getVPixelWidth(),
-        );
-        ctx.putImageData(imageData, 0, 0);
+        this.draw(ctx, memory, preview.pixels());
+
+        const reader = new FileReader();
+        reader.readAsArrayBuffer(this.props.input);
+        reader.onload = event => {
+          const data = new Uint8Array(event.target.result);
+          preview.read(data, this.props.input.size);
+          this.draw(ctx, memory, preview.pixels());
+        };
       }
     });
   }
 
   getVPixelHeight = () => Math.ceil(this.props.height * this.props.scale);
-
   getVPixelWidth = () => Math.ceil(this.props.width * this.props.scale);
-
   getVPixelCount = () => this.getVPixelHeight() * this.getVPixelWidth();
+  draw = (ctx: CanvasRenderingContext2D, memory, pixels) => {
+    console.log(`Drawing from memory at ${pixels}`);
+    const imageData = new ImageData(
+      new Uint8ClampedArray(memory.buffer, pixels, this.getVPixelCount() * 4),
+      this.getVPixelHeight(),
+      this.getVPixelWidth(),
+    );
+    ctx.putImageData(imageData, 0, 0);
+  };
 
   render() {
     return (

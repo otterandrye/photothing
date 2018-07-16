@@ -7,7 +7,10 @@ import ImageFrame from "./ImageFrame";
 import FileSize from "./FileSize";
 import guid from "./guid";
 
-type Props = {||};
+type Props = {|
+  edit: File => void,
+|};
+
 type Upload = {|
   file: File,
   status: "SELECTED" | "IN_PROGRESS" | "DONE",
@@ -168,6 +171,12 @@ export default class MultiUploader extends React.Component<Props, State> {
                 <small className={css.size}>
                   <FileSize size={info.file.size} />
                 </small>
+              </div>
+              <div
+                className={css.edit}
+                onClick={() => this.props.edit(info.file)}
+              >
+                {"\u270E"}
               </div>
               <div className={css.x} onClick={() => this.delete(id)}>
                 {"\xD7"}
