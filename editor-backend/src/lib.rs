@@ -2,9 +2,14 @@
 
 extern crate wasm_bindgen;
 use wasm_bindgen::prelude::*;
+mod dng;
+use dng::parse_dng;
+use std::panic;
 
 #[wasm_bindgen]
 extern "C" {
+	#[wasm_bindgen(js_namespace = console)]
+	fn error(s: String);
     #[wasm_bindgen(js_namespace = console)]
     fn log(s: &str);
     #[wasm_bindgen(js_namespace = console, js_name = log)]
@@ -39,6 +44,10 @@ pub struct Preview {
     pixels: Vec<Pixel>,
 }
 
+fn hook(info: &panic::PanicInfo) {
+    error(info.to_string());
+}
+
 #[wasm_bindgen]
 impl Preview {
     pub fn new(width: u32, height: u32) -> Preview {
@@ -61,6 +70,7 @@ impl Preview {
     }
 
     pub fn read(&mut self, tiff: &[u8], length: u32) {
+    	panic::set_hook(Box::new(hook));
     	log(&format!("{:#x?}", tiff[0]));
 
     	for p in &mut self.pixels {
@@ -68,7 +78,7 @@ impl Preview {
     		p.blue(tiff[0]);
 		}
 
-    	log(&format!("{:#x?}", self.pixels[0].r));
+		log(&format!("First IFD entry count: {}", parse_dng(tiff, length)));
     }
 
     pub fn pixels(&self) -> *const Pixel {
