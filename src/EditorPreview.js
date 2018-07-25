@@ -51,8 +51,8 @@ export default class EditorPreview extends React.Component<Props> {
     console.log(`Drawing from memory at ${pixels}`);
     const imageData = new ImageData(
       new Uint8ClampedArray(memory.buffer, pixels, this.getVPixelCount() * 4),
-      this.getVPixelHeight(),
       this.getVPixelWidth(),
+      this.getVPixelHeight(),
     );
     ctx.putImageData(imageData, 0, 0);
   };

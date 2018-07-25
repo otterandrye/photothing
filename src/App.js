@@ -14,7 +14,14 @@ export default class App extends React.Component<{||}, State> {
   render() {
     return (
       <React.Fragment>
-        {this.state.selected && <EditorPreview input={this.state.selected} />}
+        {this.state.selected && (
+          <EditorPreview
+            input={this.state.selected}
+            height={193}
+            width={256}
+            scale={1}
+          />
+        )}
         <MultiUploader edit={file => this.setState({ selected: file })} />
       </React.Fragment>
     );
