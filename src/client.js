@@ -19,7 +19,6 @@ function uploadFile(file, uploadResponse) {
   xhr.onreadystatechange = () => {
     if (xhr.readyState === 4) {
       if (xhr.status === 200) {
-        // NB: this only works in dev until we hook up cloudfront. api form won't change tho
         document.getElementById("preview").src = uploadResponse.get_url;
       } else {
         alert("Could not upload file.");
