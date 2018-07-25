@@ -8,6 +8,7 @@ import FileSize from "./FileSize";
 import guid from "./guid";
 
 type Props = {|
+  api: string,
   edit: File => void,
 |};
 
@@ -27,21 +28,28 @@ const formatter = new Intl.NumberFormat(undefined, { style: "percent" });
 export default class MultiUploader extends React.Component<Props, State> {
   state: State = { uploads: {} };
 
-  getSignedRequest = (file: File) =>
+  getSignedRequest = (api: string, file: File) =>
     new Promise((resolve, reject) => {
+      const uploadRequest = {
+        filename: file.name,
+        file_type: file.type,
+      };
       const xhr = new XMLHttpRequest();
-      xhr.open("GET", `/sign-s3?file-name=${file.name}&file-type=${file.type}`);
+      xhr.open("POST", `${api}/api/upload`);
+      xhr.withCredentials = true;
+      xhr.setRequestHeader("Content-type", "application/json");
       xhr.onreadystatechange = () => {
         if (xhr.readyState === 4) {
           if (xhr.status === 200) {
-            const response = JSON.parse(xhr.responseText);
-            resolve(response.signedRequest);
+            const pendingUpload = JSON.parse(xhr.responseText);
+            const uploadResponse = pendingUpload.upload;
+            resolve(uploadResponse.url);
           } else {
-            reject(new Error("Could not get signed URL."));
+            reject(new Error(`Could not get signed URL: ${xhr.status}`));
           }
         }
       };
-      xhr.send();
+      xhr.send(JSON.stringify(uploadRequest));
     });
 
   drop = (evt: SyntheticDragEvent<HTMLDivElement>) => {
@@ -101,25 +109,31 @@ export default class MultiUploader extends React.Component<Props, State> {
 
     mark("IN_PROGRESS", 0);
 
-    this.getSignedRequest(upload.file).then(signedRequest => {
-      const xhr = new XMLHttpRequest();
-      xhr.upload.addEventListener(
-        "progress",
-        (evt: ProgressEvent) => {
-          mark("IN_PROGRESS", formatter.format(evt.loaded / evt.total));
-        },
-        false,
-      );
-      xhr.open("PUT", signedRequest);
-      xhr.onreadystatechange = () => {
-        if (xhr.readyState === 4) {
-          if (xhr.status === 200) {
-            mark("DONE", 100);
+    this.getSignedRequest(this.props.api, upload.file).then(
+      signedRequest => {
+        const xhr = new XMLHttpRequest();
+        xhr.upload.addEventListener(
+          "progress",
+          (evt: ProgressEvent) => {
+            mark("IN_PROGRESS", formatter.format(evt.loaded / evt.total));
+          },
+          false,
+        );
+        xhr.open("PUT", signedRequest);
+        xhr.onreadystatechange = () => {
+          if (xhr.readyState === 4) {
+            if (xhr.status === 200) {
+              mark("DONE", 100);
+            }
           }
-        }
-      };
-      xhr.send(upload.file);
-    });
+        };
+        xhr.send(upload.file);
+      },
+      e => {
+        console.error(`Upload failed: '${e}'`);
+        mark("SELECTED", 0);
+      },
+    );
   };
 
   render() {

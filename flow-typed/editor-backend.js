@@ -1,3 +1,5 @@
+// @flow
+
 declare module "editor-backend" {
   declare type PreviewType = {
     new: (number, number) => PreviewType,

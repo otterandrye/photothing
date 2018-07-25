@@ -6,6 +6,7 @@ import App from "./App";
 type Manifest = {|
   +styles: string[],
   +scripts: string[],
+  +api: string,
 |};
 
 export default (manifest: Manifest) => (
@@ -18,7 +19,7 @@ export default (manifest: Manifest) => (
       ))}
     </head>
     <body lang="en">
-      <App />
+      <App api={manifest.api} />
       {/* eslint-disable react/no-danger */}
       <script
         dangerouslySetInnerHTML={{
