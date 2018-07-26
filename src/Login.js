@@ -27,6 +27,13 @@ type UserCredentials = {|
 export default class Login extends React.Component<Props, State> {
   state: State = { email: "", password: "", message: null, loggedIn: false };
 
+  componentDidMount() {
+    const email = localStorage.getItem("email");
+    if (email) {
+      this.login(email);
+    }
+  }
+
   doLogin = (e: SyntheticEvent<*>) => {
     e.preventDefault();
     const data = this.loginData();
@@ -37,14 +44,12 @@ export default class Login extends React.Component<Props, State> {
     xhr.onreadystatechange = () => {
       if (xhr.readyState === 4) {
         if (xhr.status === 200) {
-          this.setState({
-            message: `Welcome, ${data.email}`,
-            loggedIn: true,
-          });
+          this.login(data.email);
           // _sigh_ maybe time for some lightweight state to stash these
           const login: UserCredentials = JSON.parse(xhr.responseText);
           localStorage.setItem("header", login.header);
           localStorage.setItem("token", login.pt_auth);
+          localStorage.setItem("email", login.email);
         } else {
           this.setState({
             message: `Login failed with status=${xhr.status}`,
@@ -54,6 +59,13 @@ export default class Login extends React.Component<Props, State> {
       }
     };
     xhr.send(JSON.stringify(data));
+  };
+
+  login = (email: string) => {
+    this.setState({
+      message: `Welcome, ${email}`,
+      loggedIn: true,
+    });
   };
 
   doRegister = (e: SyntheticEvent<*>) => {
