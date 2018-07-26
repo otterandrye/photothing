@@ -39,6 +39,7 @@ struct Scan {
 	table_mappings: HashMap<u8, u8>,
 	predictor: u8,
 	point_transform: u8,
+	data: HashMap<u8, Vec<u8>>,
 }
 
 fn read_frame(reader: &mut BufferReader) -> Frame {
@@ -120,6 +121,12 @@ fn read_scan(reader: &mut BufferReader) -> Scan {
 		table_mappings.insert(reader.read_u8(), reader.read_u8() >> 4);
 	}
 
+	// So now the bytes here are just... huffman coded components?
+	// I think I only know the number of bytes I have post-decode here...
+	// So I'll need to do huffman decode on-the-fly?
+	// Based on what I've read so far, it seems like I'll end up with..
+	//   X * Y + X * Y huffman coded bytes?
+
 	Scan {
 		table_mappings: table_mappings,
 		predictor: reader.read_u8(),
@@ -127,6 +134,7 @@ fn read_scan(reader: &mut BufferReader) -> Scan {
 			reader.read_u8(); // Eat "End of spectral selection" byte
 			reader.read_u8()
 		},
+		data: HashMap::new(),
 	}
 }
 
