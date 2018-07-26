@@ -18,6 +18,12 @@ type LoginRegister = {|
   password: string,
 |};
 
+type UserCredentials = {|
+  email: string,
+  header: string,
+  pt_auth: string,
+|};
+
 export default class Login extends React.Component<Props, State> {
   state: State = { email: "", password: "", message: null, loggedIn: false };
 
@@ -35,6 +41,10 @@ export default class Login extends React.Component<Props, State> {
             message: `Welcome, ${data.email}`,
             loggedIn: true,
           });
+          // _sigh_ maybe time for some lightweight state to stash these
+          const login: UserCredentials = JSON.parse(xhr.responseText);
+          localStorage.setItem("header", login.header);
+          localStorage.setItem("token", login.pt_auth);
         } else {
           this.setState({
             message: `Login failed with status=${xhr.status}`,
