@@ -250,6 +250,9 @@ pub enum IfdEntryValue {
     Int(u32),
     IntTriple(u32, u32, u32),
     IntQuad(u32, u32, u32, u32),
+    Rational(u32, u32),
+    RationalPair(u32, u32, u32, u32),
+    RationalTriple(u32, u32, u32, u32, u32, u32),
     Compression(Compression),
     Strips(Vec<Strip>),
     NewSubfileType(NewSubfileType),
@@ -272,12 +275,15 @@ impl IfdEntryTag {
                         IfdEntryType::Long => return IfdEntryValue::Int(reader.read_u32()),
                         IfdEntryType::Short => return IfdEntryValue::Short(reader.read_u16()),
                         IfdEntryType::Byte => return IfdEntryValue::Byte(reader.read_u8()),
+                        IfdEntryType::Rational => return IfdEntryValue::Rational(reader.read_u32(), reader.read_u32()),
                         _ => ()
                     }
                 }
                 if count == 2 {
                     match entry_type {
                         IfdEntryType::Short => return IfdEntryValue::ShortPair(reader.read_u16(), reader.read_u16()),
+                        IfdEntryType::Rational => return IfdEntryValue::RationalPair(reader.read_u32(), reader.read_u32(), reader.read_u32(), reader.read_u32()),
+
                         _ => ()
                     }
                 }
@@ -286,6 +292,7 @@ impl IfdEntryTag {
                         IfdEntryType::Long => return IfdEntryValue::IntTriple(reader.read_u32(), reader.read_u32(), reader.read_u32()),
                         IfdEntryType::Short => return IfdEntryValue::ShortTriple(reader.read_u16(), reader.read_u16(), reader.read_u16()),
                         IfdEntryType::Byte => return IfdEntryValue::ByteTriple(reader.read_u8(), reader.read_u8(), reader.read_u8()),
+                        IfdEntryType::Rational => return IfdEntryValue::RationalTriple(reader.read_u32(), reader.read_u32(), reader.read_u32(), reader.read_u32(), reader.read_u32(), reader.read_u32()),
                         _ => ()
                     }
                 }
