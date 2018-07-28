@@ -15,7 +15,7 @@
     "watch": "webpack --mode development --watch",
     "format": "prettier --write \"src/**/*.js\"",
     "test": "yarn",
-    "heroku-prebuild": "rustup target add wasm32-unknown-unknown && cargo install -f wasm-bindgen-cli"
+    "heroku-prebuild": "rustup target add wasm32-unknown-unknown && cargo install -f wasm-bindgen-cli --version 0.2.14"
   },
   "dependencies": {
     "dotenv": "6.0.0",
