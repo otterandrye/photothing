@@ -1,20 +1,7 @@
 use std::collections::HashMap;
 
-// use ::console::{log, log_u32};
-use ::byte_order::ByteOrder;
-
-/*
-pub struct Pixel {
-    red: u32,
-    green: u32,
-    blue: u32,
-    alpha: u32,
-}
-
-pub struct Image {
-    pixels: [Pixel],
-}
-*/
+// use ::console::log;
+use ::byte_order::{BufferReader, ByteOrder};
 
 #[derive(Hash, Eq, Debug, PartialEq, Clone, Copy)]
 pub enum IfdEntryTag {
@@ -356,8 +343,6 @@ pub struct IfdEntry {
     pub offset: usize,
 }
 
-
-
 pub struct Dng<'a> {
     buffer: &'a [u8],
     pub ifds: Vec<HashMap<IfdEntryTag, IfdEntry>>,
@@ -395,25 +380,25 @@ fn is_offset(entry_type: IfdEntryType, count: u32) -> bool {
 }
 
 
-fn parse_ifd_list(byte_order: ByteOrder, buffer: &[u8], position: &mut usize) -> Vec<HashMap<IfdEntryTag, IfdEntry>> {
-    let mut next_ifd = byte_order.read_u32(buffer, *position) as usize;
+fn parse_ifd_list(reader: &mut BufferReader) -> Vec<HashMap<IfdEntryTag, IfdEntry>> {
     let mut ifds = Vec::new();
+
+    let mut next_ifd = reader.read_u32() as usize;
     while next_ifd != 0 {
-        *position = next_ifd;
-
-        let ifd = parse_ifd(byte_order, buffer, position);
-        next_ifd = byte_order.read_u32(buffer, *position) as usize;
-        ifds.push(ifd);
+        reader.skip_to(next_ifd);
+        ifds.push(parse_ifd(reader));
+        next_ifd = reader.read_u32() as usize;
     }
-
 
     let mut new_ifds = Vec::new();
     for i in 0..ifds.len() {
         match ifds[i].get(&IfdEntryTag::SubIFDs) {
             Some(entry) => {
                 for offset in 0..entry.count {
-                    let this_offset = byte_order.read_u32(buffer, entry.offset + (offset as usize * 4)) as usize;
-                    new_ifds.push(parse_ifd(byte_order, buffer, &mut this_offset.clone()));
+                    reader.skip_to(entry.offset + (offset as usize * 4));
+                    let this_offset = reader.read_u32() as usize;
+                    reader.skip_to(this_offset);
+                    new_ifds.push(parse_ifd(reader));
                 }
             },
             None => ()
@@ -425,49 +410,55 @@ fn parse_ifd_list(byte_order: ByteOrder, buffer: &[u8], position: &mut usize) ->
 }
 
 
-fn parse_ifd(byte_order: ByteOrder, buffer: &[u8], position: &mut usize) -> HashMap<IfdEntryTag, IfdEntry> {
-    let ifd_entry_count = byte_order.read_u16(buffer, *position);
-    *position += 2;
+fn parse_ifd(reader: &mut BufferReader) -> HashMap<IfdEntryTag, IfdEntry> {
+    let ifd_entry_count = reader.read_u16();
     let mut ifd_entries = HashMap::new();
     for _n in 0..ifd_entry_count {
-        let entry = parse_ifd_entry(byte_order, buffer, position);
+        let entry = parse_ifd_entry(reader);
         ifd_entries.insert(entry.tag, entry);
     }
 
     ifd_entries
 }
 
-fn parse_ifd_entry(byte_order: ByteOrder, buffer: &[u8], position: &mut usize) -> IfdEntry {
-    *position += 12;
-
-    let entry_type = IfdEntryType::from_u16(byte_order.read_u16(buffer, *position - 10));
-    let count = byte_order.read_u32(buffer, *position - 8);
+fn parse_ifd_entry(reader: &mut BufferReader) -> IfdEntry {
+    let tag = IfdEntryTag::from_u16(reader.read_u16());
+    let entry_type = IfdEntryType::from_u16(reader.read_u16());
+    let count = reader.read_u32();
 
     IfdEntry {
-        tag: IfdEntryTag::from_u16(byte_order.read_u16(buffer, *position - 12)),
+        tag: tag,
         entry_type: entry_type,
         count: count,
-        offset: if is_offset(entry_type, count) { byte_order.read_u32(buffer, *position - 4) as usize } 
-            else { *position - 4 },
+        offset: if is_offset(entry_type, count) { reader.read_u32() as usize } 
+            else { 
+                let val = reader.offset();
+                reader.read_u32();
+                val
+            },
     }
 }
 
-pub fn parse_dng(buffer: &[u8], _length: u32) -> Dng {
+#[derive(Debug)]
+pub enum DngParseError {
+    NotADng,
+}
+
+pub fn parse_dng(buffer: &[u8], _length: u32) -> Result<Dng, DngParseError> {
     let byte_order: ByteOrder = if buffer[0] == 0x49 && buffer[1] == 0x49 { ByteOrder::LittleEndian }
         else if buffer[0] == 0x4D && buffer[1] == 0x4D { ByteOrder::BigEndian }
-        else { panic!("File has invalid Byte Order") };
+        else { return Err(DngParseError::NotADng) };
 
-    let mut position: usize = 2;
-    let confirm_dng = byte_order.read_u16(buffer, position);
-    position += 2;
+    let mut reader = BufferReader::new(buffer, byte_order);
+    reader.read_u16(); // This short is the already parsed byte order!
 
-    if confirm_dng != 42 {
-        panic!("File is not a DNG {}", confirm_dng)
+    if reader.read_u16() != 42 {
+        return Err(DngParseError::NotADng)
     }
 
-    Dng {
+    Ok(Dng {
         buffer: buffer,
-        ifds: parse_ifd_list(byte_order, buffer, &mut position),
+        ifds: parse_ifd_list(&mut reader),
         byte_order: byte_order,
-    }
+    })
 }

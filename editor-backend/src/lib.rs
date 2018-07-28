@@ -67,7 +67,7 @@ impl Preview {
     pub fn read(&mut self, tiff: &[u8], length: u32) {
     	panic::set_hook(Box::new(hook));
 
-    	let dng = parse_dng(tiff, length);
+    	let dng = parse_dng(tiff, length).unwrap();
     	//log(&format!("Data length: {}", dngData.len()));
     	//log(&format!("Px length: {}", self.pixels.len()));
 

@@ -172,7 +172,7 @@ fn read_scan(reader: &mut BufferReader) -> Scan {
 	}
 }
 
-pub fn parse_lossless_jpeg(buffer: &[u8]) -> Image {
+pub fn parse_lossless_jpeg(buffer: &[u8]) -> Result<Image, ()> {
 	let mut reader = BufferReader::new(buffer, BigEndian);
 	let soi = reader.read_u16();
 	if soi != SOI {
@@ -187,10 +187,10 @@ pub fn parse_lossless_jpeg(buffer: &[u8]) -> Image {
 	let frame = read_frame(&mut reader);
 	log(&format!("Found {:#?}", frame));
 
-	Image {
+	Ok(Image {
 		x: frame.x,
 		y: frame.y,
 		precision: frame.precision,
 		components: Vec::new(),
-	}
+	})
 }
