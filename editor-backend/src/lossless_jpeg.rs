@@ -8,6 +8,11 @@ const SOF_3: u16 = 0xFFC3;
 const DHT: u16 = 0xFFC4;
 const EOI: u16 = 0xFFD9;
 const SOS: u16 = 0xFFDA;
+const RST: u16 = 0xFFDD;
+const COM: u16 = 0xFFFE;
+const DNL: u16 = 0xFFDC;
+const APP1: u16 = 0xFFE0;
+const APP16: u16 = 0xFFEF;
 
 #[derive(Debug)]
 struct Frame {
@@ -42,6 +47,21 @@ struct Scan {
 	data: HashMap<u8, Vec<u8>>,
 }
 
+#[derive(Debug)]
+pub struct Image {
+	x: u16,
+	y: u16,
+	precision: u8,
+	components: Vec<ComponentData>,
+}
+
+#[derive(Debug)]
+pub struct ComponentData {
+	data: Vec<u16>,
+	x_sample: u8,
+	y_sample: u8,
+}
+
 fn read_frame(reader: &mut BufferReader) -> Frame {
 	// First, we can just read the length. We don't need it though.
 	reader.read_u16();
@@ -67,6 +87,8 @@ fn read_frame(reader: &mut BufferReader) -> Frame {
 	let mut tables = HashMap::new();
 	let mut scans = Vec::new();
 	let mut next_marker = reader.read_u16();
+	let mut _restart_interval = 0;
+	let mut num_lines = y;
 	while next_marker != EOI {
 		if next_marker == DHT {
 			let table = read_huffman_table(reader);
@@ -74,6 +96,18 @@ fn read_frame(reader: &mut BufferReader) -> Frame {
 		} else if next_marker == SOS {
 			let scan = read_scan(reader);
 			scans.push(scan);
+		} else if next_marker == RST {
+			reader.read_u16(); // Length. Always 4.
+			_restart_interval = reader.read_u16();
+		} else if next_marker == COM || (next_marker >= APP1 && next_marker <= APP16) {
+			// These sections are comments and proprietary app data. Skip them.
+			let length = reader.read_u16();
+			for _i in 0..length - 1 {
+				reader.read_u8();
+			}
+		} else if next_marker == DNL {
+			reader.read_u16(); // Length. Always 4.
+			num_lines = reader.read_u16();
 		} else {
 			if (next_marker >> 8) == 0xFF && next_marker != 0xFFFF && next_marker != 0xFF00 {
 				log(&format!("Unknown marker: {:#x?}", next_marker));
@@ -85,7 +119,7 @@ fn read_frame(reader: &mut BufferReader) -> Frame {
 	Frame {
 		tables: tables,
 		precision: precision,
-		y: y,
+		y: num_lines,
 		x: x,
 		components: components,
 		scans: scans,
@@ -138,7 +172,7 @@ fn read_scan(reader: &mut BufferReader) -> Scan {
 	}
 }
 
-pub fn parse_lossless_jpeg(buffer: &[u8]) {
+pub fn parse_lossless_jpeg(buffer: &[u8]) -> Image {
 	let mut reader = BufferReader::new(buffer, BigEndian);
 	let soi = reader.read_u16();
 	if soi != SOI {
@@ -153,4 +187,10 @@ pub fn parse_lossless_jpeg(buffer: &[u8]) {
 	let frame = read_frame(&mut reader);
 	log(&format!("Found {:#?}", frame));
 
+	Image {
+		x: frame.x,
+		y: frame.y,
+		precision: frame.precision,
+		components: Vec::new(),
+	}
 }
