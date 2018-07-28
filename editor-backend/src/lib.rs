@@ -10,7 +10,7 @@ mod byte_order;
 mod lossless_jpeg;
 
 pub use console::*;
-use dng::IfdEntryTag;
+use dng::{IfdEntryTag, IfdEntryValue};
 use lossless_jpeg::parse_lossless_jpeg;
 
 pub struct Pixel {
@@ -76,81 +76,11 @@ impl Preview {
     	for ifd in &dng.ifds {
     		log("NEW IFD");
 
-    		match ifd.get(&IfdEntryTag::NewSubfileType) {
-				Some(entry) => {
-					log(&format!("Type: {:#?}", dng.read_u32(entry.offset)));
-				},
-				None => ()
-			}
-
-			match ifd.get(&IfdEntryTag::ImageWidth) {
-				Some(entry) => {
-					log(&format!("Width: {:#?}", dng.read_u32(entry.offset)));
-				},
-				None => ()
-			}
-
-			match ifd.get(&IfdEntryTag::ImageLength) {
-				Some(entry) => {
-					log(&format!("Length: {:#?}", dng.read_u32(entry.offset)));
-				},
-				None => ()
-			}
-
-			match ifd.get(&IfdEntryTag::Compression) {
-				Some(entry) => {
-					log(&format!("Compression: {:#?}", dng.read_u16(entry.offset)));
-				},
-				None => ()
-			}
-
-			match ifd.get(&IfdEntryTag::PhotometricInterpretation) {
-				Some(entry) => {
-					log(&format!("PhotometricInterpretation: {:#?}", dng.read_u16(entry.offset)));
-				},
-				None => ()
-			}
-
-			match ifd.get(&IfdEntryTag::BitsPerSample) {
-				Some(entry) => {
-					log(&format!("BitsPerSample first: {:#?} type: {:#?} count: {:#?}", dng.read_u16(entry.offset), entry.entry_type, entry.count));
-				},
-				None => ()
-			}
-
-			match ifd.get(&IfdEntryTag::TileLength) {
-				Some(entry) => {
-					log(&format!("TileLength: {:#?}", dng.read_u32(entry.offset)));
-				},
-				None => ()
-			}
-
-			match ifd.get(&IfdEntryTag::TileWidth) {
-				Some(entry) => {
-					log(&format!("TileWidth: {:#?}", dng.read_u32(entry.offset)));
-				},
-				None => ()
-			}
-
-			match ifd.get(&IfdEntryTag::PlanarConfiguration) {
-				Some(entry) => {
-					log(&format!("PlanarConfiguration: {:#?}", dng.read_u16(entry.offset)));
-				},
-				None => ()
-			}
-
-			match ifd.get(&IfdEntryTag::TileByteCounts) {
-				Some(entry) => {
-					log(&format!("TileByteCounts: first: {:#?}", dng.read_u32(entry.offset)));
-				},
-				None => ()
-			}
-
 			match ifd.get(&IfdEntryTag::TileOffsets) {
-				Some(entry) => {
-					log(&format!("TileOffsets type: {:#?} count: {:#?}", entry.entry_type, entry.count));
+				Some(IfdEntryValue::Offset(entry_type, count, offset)) => {
+					log(&format!("TileOffsets type: {:#?} count: {:#?}", entry_type, count));
 					
-					let first_tile_offset = dng.read_u32(entry.offset) as usize;
+					let first_tile_offset = dng.read_u32(*offset) as usize;
 
 					log(&format!("JPEG1 (SOI): {:#x?}", dng.read_u16_be(first_tile_offset)));
 					let encoding_type = dng.read_u16_be(first_tile_offset + 2);
@@ -198,7 +128,7 @@ impl Preview {
 					log(&format!("DHT2 (T_c, T_h): {:#?}, {:#?}", dht_info2 >> 4, dht_info2 & 0x0F));
 
 				},
-				None => ()
+				_ => ()
 			}
     	}
 

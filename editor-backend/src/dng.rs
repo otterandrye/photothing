@@ -1,7 +1,94 @@
 use std::collections::HashMap;
 
-// use ::console::log;
+use ::console::log;
 use ::byte_order::{BufferReader, ByteOrder};
+
+#[derive(Debug)]
+pub enum Compression {
+    Uncompressed,
+    Huffman,
+    JpegCompressed,
+    Deflate,
+    PackBits,
+    LossyJpeg,
+    Unknown(u16),
+}
+
+impl Compression {
+    fn from_u16(val: u16) -> Compression {
+        match val {
+            1 => Compression::Uncompressed,
+            2 => Compression::Huffman,
+            7 => Compression::JpegCompressed,
+            8 => Compression::Deflate,
+            32773 => Compression::PackBits,
+            34892 => Compression::LossyJpeg,
+            _ => Compression::Unknown(val),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct Strip {}
+
+#[derive(Debug)]
+pub enum NewSubfileType {
+    Original,
+    Preview,
+    Unknown(u32),
+}
+
+impl NewSubfileType {
+    fn from_u32(val: u32) -> NewSubfileType {
+        match val {
+            0 => NewSubfileType::Original,
+            1 => NewSubfileType::Preview,
+            _ => NewSubfileType::Unknown(val),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum PhotometricInterpretation {
+    WhiteIsZero,
+    BlackIsZero,
+    RGB,
+    YCbCr,
+    ColorFilterArray,
+    LinearRaw,
+    Unknown(u16),
+}
+
+impl PhotometricInterpretation {
+    fn from_u16(val: u16) -> PhotometricInterpretation {
+        match val {
+            0 => PhotometricInterpretation::WhiteIsZero,
+            1 => PhotometricInterpretation::BlackIsZero,
+            2 => PhotometricInterpretation::RGB,
+            6 => PhotometricInterpretation::YCbCr,
+            32803 => PhotometricInterpretation::ColorFilterArray,
+            34892 => PhotometricInterpretation::LinearRaw,
+            _ => PhotometricInterpretation::Unknown(val),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum PlanarConfiguration {
+    Chunky,
+    Planar,
+    Unknown(u16),
+}
+
+impl PlanarConfiguration {
+    fn from_u16(val: u16) -> PlanarConfiguration {
+        match val {
+            1 => PlanarConfiguration::Chunky,
+            2 => PlanarConfiguration::Planar,
+            _ => PlanarConfiguration::Unknown(val),
+        }
+    }
+}
 
 #[derive(Hash, Eq, Debug, PartialEq, Clone, Copy)]
 pub enum IfdEntryTag {
@@ -150,7 +237,80 @@ pub enum IfdEntryTag {
     Other(u16),
 }
 
+#[derive(Debug)]
+pub enum IfdEntryValue {
+    Ascii(String),
+    Byte(u8),
+    ByteTriple(u8, u8, u8),
+    ByteQuad(u8, u8, u8, u8),
+    Short(u16),
+    ShortPair(u16, u16),
+    ShortTriple(u16, u16, u16),
+    Shorts(Vec<u16>),
+    Int(u32),
+    IntTriple(u32, u32, u32),
+    IntQuad(u32, u32, u32, u32),
+    Compression(Compression),
+    Strips(Vec<Strip>),
+    NewSubfileType(NewSubfileType),
+    PhotometricInterpretation(PhotometricInterpretation),
+    PlanarConfiguration(PlanarConfiguration),
+    Offset(IfdEntryType, u32, usize),
+}
+
 impl IfdEntryTag {
+    fn parse(&self, reader: &mut BufferReader, entry_type: IfdEntryType, count: u32, offset: usize) -> IfdEntryValue {
+        reader.skip_to(offset);
+        match *self {
+            IfdEntryTag::NewSubfileType => IfdEntryValue::NewSubfileType(NewSubfileType::from_u32(reader.read_u32())),
+            IfdEntryTag::PhotometricInterpretation => IfdEntryValue::PhotometricInterpretation(PhotometricInterpretation::from_u16(reader.read_u16())),
+            IfdEntryTag::Compression => IfdEntryValue::Compression(Compression::from_u16(reader.read_u16())),
+            IfdEntryTag::PlanarConfiguration => IfdEntryValue::PlanarConfiguration(PlanarConfiguration::from_u16(reader.read_u16())),
+            _ => {
+                if count == 1 {
+                    match entry_type {
+                        IfdEntryType::Long => return IfdEntryValue::Int(reader.read_u32()),
+                        IfdEntryType::Short => return IfdEntryValue::Short(reader.read_u16()),
+                        IfdEntryType::Byte => return IfdEntryValue::Byte(reader.read_u8()),
+                        _ => ()
+                    }
+                }
+                if count == 2 {
+                    match entry_type {
+                        IfdEntryType::Short => return IfdEntryValue::ShortPair(reader.read_u16(), reader.read_u16()),
+                        _ => ()
+                    }
+                }
+                if count == 3 {
+                    match entry_type {
+                        IfdEntryType::Long => return IfdEntryValue::IntTriple(reader.read_u32(), reader.read_u32(), reader.read_u32()),
+                        IfdEntryType::Short => return IfdEntryValue::ShortTriple(reader.read_u16(), reader.read_u16(), reader.read_u16()),
+                        IfdEntryType::Byte => return IfdEntryValue::ByteTriple(reader.read_u8(), reader.read_u8(), reader.read_u8()),
+                        _ => ()
+                    }
+                }
+                if count == 4 && entry_type == IfdEntryType::Long {
+                    return IfdEntryValue::IntQuad(reader.read_u32(), reader.read_u32(), reader.read_u32(), reader.read_u32());
+                }
+                if count == 4 && entry_type == IfdEntryType::Byte {
+                    return IfdEntryValue::ByteQuad(reader.read_u8(), reader.read_u8(), reader.read_u8(), reader.read_u8());
+                }
+                if entry_type == IfdEntryType::Ascii {
+                    let mut chars = Vec::new();
+                    for _i in 0..count {
+                        let character = reader.read_u8();
+                        if character == 0x00 {
+                            break;
+                        }
+                        chars.push(character);
+                    }
+                    return IfdEntryValue::Ascii(String::from_utf8(chars).unwrap());
+                }
+                IfdEntryValue::Offset(entry_type, count, offset)
+            },
+        }
+    }
+
     fn from_u16(value: u16) -> IfdEntryTag {
         match value {
             254 => IfdEntryTag::NewSubfileType,
@@ -345,7 +505,7 @@ pub struct IfdEntry {
 
 pub struct Dng<'a> {
     buffer: &'a [u8],
-    pub ifds: Vec<HashMap<IfdEntryTag, IfdEntry>>,
+    pub ifds: Vec<HashMap<IfdEntryTag, IfdEntryValue>>,
     byte_order: ByteOrder,
 }
 
@@ -379,8 +539,7 @@ fn is_offset(entry_type: IfdEntryType, count: u32) -> bool {
     }
 }
 
-
-fn parse_ifd_list(reader: &mut BufferReader) -> Vec<HashMap<IfdEntryTag, IfdEntry>> {
+fn parse_ifd_list(reader: &mut BufferReader) -> Vec<HashMap<IfdEntryTag, IfdEntryValue>> {
     let mut ifds = Vec::new();
 
     let mut next_ifd = reader.read_u32() as usize;
@@ -393,15 +552,15 @@ fn parse_ifd_list(reader: &mut BufferReader) -> Vec<HashMap<IfdEntryTag, IfdEntr
     let mut new_ifds = Vec::new();
     for i in 0..ifds.len() {
         match ifds[i].get(&IfdEntryTag::SubIFDs) {
-            Some(entry) => {
-                for offset in 0..entry.count {
-                    reader.skip_to(entry.offset + (offset as usize * 4));
+            Some(IfdEntryValue::Offset(entry_type, count, offset)) => {
+                for individual_offset in 0..*count {
+                    reader.skip_to(offset + (individual_offset as usize * 4));
                     let this_offset = reader.read_u32() as usize;
                     reader.skip_to(this_offset);
                     new_ifds.push(parse_ifd(reader));
                 }
             },
-            None => ()
+            _ => ()
         }
     }
 
@@ -409,34 +568,34 @@ fn parse_ifd_list(reader: &mut BufferReader) -> Vec<HashMap<IfdEntryTag, IfdEntr
     ifds
 }
 
-
-fn parse_ifd(reader: &mut BufferReader) -> HashMap<IfdEntryTag, IfdEntry> {
+fn parse_ifd(reader: &mut BufferReader) -> HashMap<IfdEntryTag, IfdEntryValue> {
     let ifd_entry_count = reader.read_u16();
     let mut ifd_entries = HashMap::new();
     for _n in 0..ifd_entry_count {
-        let entry = parse_ifd_entry(reader);
-        ifd_entries.insert(entry.tag, entry);
+        let (tag, value) = parse_ifd_entry(reader);
+        ifd_entries.insert(tag, value);
     }
 
     ifd_entries
 }
 
-fn parse_ifd_entry(reader: &mut BufferReader) -> IfdEntry {
+fn parse_ifd_entry(reader: &mut BufferReader) -> (IfdEntryTag, IfdEntryValue) {
     let tag = IfdEntryTag::from_u16(reader.read_u16());
     let entry_type = IfdEntryType::from_u16(reader.read_u16());
     let count = reader.read_u32();
+    log(&format!("Found tag: {:?}", tag));
+    let offset = if is_offset(entry_type, count) {
+        reader.read_u32() as usize
+    } else { 
+        let val = reader.offset();
+        reader.read_u32();
+        val
+    };
 
-    IfdEntry {
-        tag: tag,
-        entry_type: entry_type,
-        count: count,
-        offset: if is_offset(entry_type, count) { reader.read_u32() as usize } 
-            else { 
-                let val = reader.offset();
-                reader.read_u32();
-                val
-            },
-    }
+    let prev_offset = reader.offset();
+    let ret_val = (tag, tag.parse(reader, entry_type, count, offset));
+    reader.skip_to(prev_offset);
+    ret_val
 }
 
 #[derive(Debug)]
