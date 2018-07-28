@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use ::console::log;
+// use ::console::log;
 use ::byte_order::{BufferReader, ByteOrder};
 
 #[derive(Debug)]
@@ -590,7 +590,6 @@ fn parse_ifd_entry(reader: &mut BufferReader) -> (IfdEntryTag, IfdEntryValue) {
     let tag = IfdEntryTag::from_u16(reader.read_u16());
     let entry_type = IfdEntryType::from_u16(reader.read_u16());
     let count = reader.read_u32();
-    log(&format!("Found tag: {:?}", tag));
     let offset = if is_offset(entry_type, count) {
         reader.read_u32() as usize
     } else { 

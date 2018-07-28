@@ -172,16 +172,21 @@ fn read_scan(reader: &mut BufferReader) -> Scan {
 	}
 }
 
-pub fn parse_lossless_jpeg(buffer: &[u8]) -> Result<Image, ()> {
+pub enum JpegParseError {
+	UnsupportedJpeg,
+	NotAJpeg,
+}
+
+pub fn parse_lossless_jpeg(buffer: &[u8]) -> Result<Image, JpegParseError> {
 	let mut reader = BufferReader::new(buffer, BigEndian);
 	let soi = reader.read_u16();
 	if soi != SOI {
-		panic!("Buffer is not a JPEG");
+		return Err(JpegParseError::NotAJpeg);
 	}
 
 	let sof = reader.read_u16();
 	if sof != SOF_3 {
-		panic!(format!("Buffer is not a Lossless JPEG {:#x?}", sof));
+		return Err(JpegParseError::UnsupportedJpeg);
 	}
 
 	let frame = read_frame(&mut reader);
