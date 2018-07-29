@@ -275,8 +275,32 @@ pub enum IfdEntryTag {
     CFARepeatPatternDim,
     CFAPattern,
     Copyright,
+    ExposureTime,
     EXIF,
+    ExposureProgram,
+    ISO,
+    SensitivityType,
+    RecommendedExposureIndex,
+    ExifVersion,
+    DateTimeOriginal,
+    CreateDate,
+    ShutterSpeedValue,
+    ExposureCompensation,
+    MeteringMode,
+    Flash,
     ImageNumber,
+    SubSecTimeOriginal,
+    SubSecTimeDigitized,
+    ColorSpace,
+    FocalPlaneXResolution,
+    FocalPlaneYResolution,
+    FocalPlaneResolutionUnit,
+    CustomRendered,
+    ExposureMode,
+    WhiteBalance,
+    SceneCaptureType,
+    SerialNumber,
+    LensSerialNumber,
 
     // DNG Tags:
     DNGVersion,
@@ -412,6 +436,7 @@ impl IfdEntryTag {
                 | IfdEntryTag::CalibrationIlluminant2 => IfdEntryValue::Illumination(Illumination::from_u16(reader.read_u16())),
             IfdEntryTag::CFALayout => IfdEntryValue::CFALayout(CFALayout::from_u16(reader.read_u16())),
             IfdEntryTag::EXIF
+                | IfdEntryTag::SubIFDs
                 | IfdEntryTag::TileOffsets
                 | IfdEntryTag::StripOffsets => IfdEntryValue::Offset(entry_type, count, offset),
             IfdEntryTag::Orientation => IfdEntryValue::Orientation(Orientation::from_u16(reader.read_u16())),
@@ -520,8 +545,32 @@ impl IfdEntryTag {
             33421 => IfdEntryTag::CFARepeatPatternDim,
             33422 => IfdEntryTag::CFAPattern,
             33432 => IfdEntryTag::Copyright,
+            33434 => IfdEntryTag::ExposureTime,
             34665 => IfdEntryTag::EXIF,
+            34850 => IfdEntryTag::ExposureProgram,
+            34855 => IfdEntryTag::ISO,
+            34864 => IfdEntryTag::SensitivityType,
+            34866 => IfdEntryTag::RecommendedExposureIndex,
+            36864 => IfdEntryTag::ExifVersion,
+            36867 => IfdEntryTag::DateTimeOriginal,
+            36868 => IfdEntryTag::CreateDate,
+            37377 => IfdEntryTag::ShutterSpeedValue,
+            37380 => IfdEntryTag::ExposureCompensation,
+            37383 => IfdEntryTag::MeteringMode,
+            37385 => IfdEntryTag::Flash,
             37393 => IfdEntryTag::ImageNumber,
+            37521 => IfdEntryTag::SubSecTimeOriginal,
+            37522 => IfdEntryTag::SubSecTimeDigitized,
+            40961 => IfdEntryTag::ColorSpace,
+            41486 => IfdEntryTag::FocalPlaneXResolution,
+            41487 => IfdEntryTag::FocalPlaneYResolution,
+            41488 => IfdEntryTag::FocalPlaneResolutionUnit,
+            41985 => IfdEntryTag::CustomRendered,
+            41986 => IfdEntryTag::ExposureMode,
+            41987 => IfdEntryTag::WhiteBalance,
+            41990 => IfdEntryTag::SceneCaptureType,
+            42033 => IfdEntryTag::SerialNumber,
+            42037 => IfdEntryTag::LensSerialNumber,
             50706 => IfdEntryTag::DNGVersion,
             50707 => IfdEntryTag::DNGBackwardVersion,
             50708 => IfdEntryTag::UniqueCameraModel,
@@ -711,6 +760,18 @@ fn parse_ifd_list(reader: &mut BufferReader) -> Vec<HashMap<IfdEntryTag, IfdEntr
     let mut new_ifds = Vec::new();
     for i in 0..ifds.len() {
         match ifds[i].get(&IfdEntryTag::SubIFDs) {
+            Some(IfdEntryValue::Offset(_entry_type, count, offset)) => {
+                for individual_offset in 0..*count {
+                    reader.skip_to(offset + (individual_offset as usize * 4));
+                    let this_offset = reader.read_u32() as usize;
+                    reader.skip_to(this_offset);
+                    new_ifds.push(parse_ifd(reader));
+                }
+            },
+            _ => ()
+        }
+
+        match ifds[i].get(&IfdEntryTag::EXIF) {
             Some(IfdEntryValue::Offset(_entry_type, count, offset)) => {
                 for individual_offset in 0..*count {
                     reader.skip_to(offset + (individual_offset as usize * 4));
