@@ -412,6 +412,7 @@ pub enum IfdEntryValue {
     RationalPair(u32, u32, u32, u32),
     RationalTriple(u32, u32, u32, u32, u32, u32),
     RationalQuad(u32, u32, u32, u32, u32, u32, u32, u32),
+    SRational(i32, i32),
     Compression(Compression),
     Strips(Vec<Strip>),
     NewSubfileType(NewSubfileType),
@@ -448,6 +449,7 @@ impl IfdEntryTag {
                         IfdEntryType::Short => return IfdEntryValue::Short(reader.read_u16()),
                         IfdEntryType::Byte => return IfdEntryValue::Byte(reader.read_u8()),
                         IfdEntryType::Rational => return IfdEntryValue::Rational(reader.read_u32(), reader.read_u32()),
+                        IfdEntryType::SRational => return IfdEntryValue::SRational(reader.read_i32(), reader.read_i32()),
                         _ => ()
                     }
                 }

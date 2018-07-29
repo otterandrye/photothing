@@ -28,6 +28,10 @@ impl ByteOrder {
             },
         }
     }
+
+    pub fn read_i32(&self, buffer: &[u8], offset: usize) -> i32 {
+        self.read_u32(buffer, offset) as i32
+    }
 }
 
 pub struct BufferReader<'a> {
@@ -94,6 +98,15 @@ impl<'a> BufferReader<'a> {
 			panic!("Cannot read u32 from non-zero bit offset");
 		}
 		let val = self.byte_order.read_u32(self.buffer, self.offset);
+		self.offset += 4;
+		val
+	}
+
+	pub fn read_i32(&mut self) -> i32 {
+		if self.bit_offset != 0 {
+			panic!("Cannot read i32 from non-zero bit offset");
+		}
+		let val = self.byte_order.read_i32(self.buffer, self.offset);
 		self.offset += 4;
 		val
 	}
