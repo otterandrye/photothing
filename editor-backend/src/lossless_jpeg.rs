@@ -16,7 +16,6 @@ const APP16: u16 = 0xFFEF;
 
 #[derive(Debug)]
 struct Frame {
-	tables: HashMap<u8,HuffmanTable>,
 	precision: u8,
 	y: u16,
 	x: u16,
@@ -34,7 +33,6 @@ struct Component {
 
 #[derive(Debug)]
 struct HuffmanTable {
-	destination: u8,
 	number_of_codes: [u8; 16],
 	values: Vec<u8>,
 }
@@ -137,17 +135,17 @@ fn read_frame(reader: &mut BufferReader) -> Frame {
 		});
 	}
 
-	let mut tables = HashMap::new();
+	let mut tables: [Option<HuffmanTable>; 4] = [None, None, None, None];
 	let mut scans = Vec::new();
 	let mut next_marker = reader.read_u16();
 	let mut _restart_interval = 0;
 	let mut num_lines = y;
 	while next_marker != EOI {
 		if next_marker == DHT {
-			let table = read_huffman_table(reader);
-			tables.insert(table.destination, table);
+			let (slot, table) = read_huffman_table(reader);
+			tables[(slot % 4) as usize] = Some(table);
 		} else if next_marker == SOS {
-			let scan = read_scan(reader);
+			let scan = read_scan(reader, &tables);
 			scans.push(scan);
 		} else if next_marker == RST {
 			reader.read_u16(); // Length. Always 4.
@@ -170,7 +168,6 @@ fn read_frame(reader: &mut BufferReader) -> Frame {
 	}
 
 	Frame {
-		tables: tables,
 		precision: precision,
 		y: num_lines,
 		x: x,
@@ -179,11 +176,10 @@ fn read_frame(reader: &mut BufferReader) -> Frame {
 	}
 }
 
-fn read_huffman_table(reader: &mut BufferReader) -> HuffmanTable {
+fn read_huffman_table(reader: &mut BufferReader) -> (u8, HuffmanTable) {
 	let length = reader.read_u16();
 
-	HuffmanTable {
-		destination: reader.read_u8(),
+	(reader.read_u8(), HuffmanTable {
 		number_of_codes: [
 			reader.read_u8(), reader.read_u8(), reader.read_u8(), reader.read_u8(),
 			reader.read_u8(), reader.read_u8(), reader.read_u8(), reader.read_u8(),
@@ -197,10 +193,10 @@ fn read_huffman_table(reader: &mut BufferReader) -> HuffmanTable {
 			}
 			values
 		}
-	}	
+	})
 }
 
-fn read_scan(reader: &mut BufferReader) -> Scan {
+fn read_scan(reader: &mut BufferReader, _tables: &[Option<HuffmanTable>]) -> Scan {
 	reader.read_u16(); // Eat the length of this section.
 	let component_count = reader.read_u8();
 	let mut table_mappings = HashMap::new();
