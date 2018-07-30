@@ -15,11 +15,17 @@ const APP1: u16 = 0xFFE0;
 const APP16: u16 = 0xFFEF;
 
 #[derive(Debug)]
+struct FrameHeader {
+	y: u16, 
+	x: u16, 
+	components: Vec<Component>,
+}
+
+#[derive(Debug)]
 struct Frame {
 	precision: u8,
 	y: u16,
 	x: u16,
-	components: Vec<Component>,
 	scans: Vec<Scan>,
 }
 
@@ -70,8 +76,9 @@ impl HuffmanTable {
 		let mut k = 0;
 		let mut code = 0;
 		let mut size = huffsize[0];
-		while huffsize[k] != 0 {
-			while huffsize[k] == size {
+
+		while k < huffsize.len() && huffsize[k] != 0 {
+			while k < huffsize.len() && huffsize[k] == size {
 				huffcode.push(code);
 				code += 1;
 				k += 1;
@@ -79,6 +86,7 @@ impl HuffmanTable {
 			code = code << 1;
 			size += 1;
 		}
+
 		huffcode
 	}
 }
@@ -135,6 +143,12 @@ fn read_frame(reader: &mut BufferReader) -> Frame {
 		});
 	}
 
+	let frame_header = FrameHeader {
+		y: y,
+		x: x,
+		components: components,
+	};
+
 	let mut tables: [Option<HuffmanTable>; 4] = [None, None, None, None];
 	let mut scans = Vec::new();
 	let mut next_marker = reader.read_u16();
@@ -145,7 +159,7 @@ fn read_frame(reader: &mut BufferReader) -> Frame {
 			let (slot, table) = read_huffman_table(reader);
 			tables[(slot % 4) as usize] = Some(table);
 		} else if next_marker == SOS {
-			let scan = read_scan(reader, &tables);
+			let scan = read_scan(reader, &tables, &frame_header);
 			scans.push(scan);
 		} else if next_marker == RST {
 			reader.read_u16(); // Length. Always 4.
@@ -171,7 +185,6 @@ fn read_frame(reader: &mut BufferReader) -> Frame {
 		precision: precision,
 		y: num_lines,
 		x: x,
-		components: components,
 		scans: scans,
 	}
 }
@@ -196,13 +209,65 @@ fn read_huffman_table(reader: &mut BufferReader) -> (u8, HuffmanTable) {
 	})
 }
 
-fn read_scan(reader: &mut BufferReader, _tables: &[Option<HuffmanTable>]) -> Scan {
+fn read_scan(reader: &mut BufferReader, tables: &[Option<HuffmanTable>; 4], frame: &FrameHeader) -> Scan {
 	reader.read_u16(); // Eat the length of this section.
 	let component_count = reader.read_u8();
 	let mut table_mappings = HashMap::new();
 	for _i in 0..component_count {
 		table_mappings.insert(reader.read_u8(), reader.read_u8() >> 4);
 	}
+
+	let predictor = reader.read_u8();
+	reader.read_u8(); // Eat "End of spectral selection" byte
+	let point_transform = reader.read_u8();
+
+	let mut data = HashMap::new();
+
+	for i in 0..component_count {
+		let slot = table_mappings.get(&i).unwrap();
+		let table = (&tables[(slot % 4) as usize]).as_ref().unwrap();
+		let code_list = table.generate_huffman_codes();
+
+		let mut component_data = Vec::new();
+
+		let mut code: u16 = 0;
+		let mut code_size: u8 = 0;
+
+
+		// This condition isn't really right... Need to account for sampling and precision
+		while (component_data.len() as u16) < frame.x * frame.y {
+			if code_size > 16 {
+				// This is a temporary hack.
+				break;
+			}
+			code = code << 1;
+			code_size += 1;
+			if reader.read_u1() {
+				code += 1
+			}
+
+			//log(&format!("code: {:#b} {:#?}", code, code_size));
+
+
+			for hcode in code_list.iter() {
+				//log(&format!("hcode: {:#b} {:#?}", hcode.code, hcode.size));
+
+				if hcode.code == code && code_size == hcode.size {
+					component_data.push(hcode.symbol);
+					code_size = 0;
+					code = 0;
+				} else if hcode.size > code_size {
+					break;
+				}
+			}
+		}
+
+		log(&format!("Found data with {} bytes", component_data.len()));
+
+		data.insert(i, component_data);
+	}
+
+	reader.reset_bit_offset();
 
 	// So now the bytes here are just... huffman coded components?
 	// I think I only know the number of bytes I have post-decode here...
@@ -212,12 +277,9 @@ fn read_scan(reader: &mut BufferReader, _tables: &[Option<HuffmanTable>]) -> Sca
 
 	Scan {
 		table_mappings: table_mappings,
-		predictor: reader.read_u8(),
-		point_transform: {
-			reader.read_u8(); // Eat "End of spectral selection" byte
-			reader.read_u8()
-		},
-		data: HashMap::new(),
+		predictor: predictor,
+		point_transform: point_transform,
+		data: data,
 	}
 }
 
