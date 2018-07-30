@@ -36,7 +36,60 @@ struct Component {
 struct HuffmanTable {
 	destination: u8,
 	number_of_codes: [u8; 16],
-	values: Vec<u8>
+	values: Vec<u8>,
+}
+
+impl HuffmanTable {
+	fn generate_huffman_codes(&self) -> Vec<HuffmanCode> {
+		let huffsize = self.generate_size_table(&self.number_of_codes);
+		let huffcode = self.generate_code_table(&huffsize);
+		let mut codelist = Vec::new();
+		for i in 0..huffcode.len() {
+			codelist.push(HuffmanCode{
+				code: huffcode[i],
+				size: huffsize[i],
+				symbol: self.values[i]
+			});
+		}
+		codelist
+	}
+
+	fn generate_size_table(&self, n_codes_per_size: &[u8]) -> Vec<u8> {
+		let mut j = 1;
+		let mut huffsize = Vec::new();
+		for i in 0..16 {
+			while j <= n_codes_per_size[i]{
+				huffsize.push((i as u8) + 1);
+				j += 1;
+			}
+			j = 1;
+		}
+		huffsize
+	}
+
+	fn generate_code_table(&self, huffsize: &Vec<u8>) -> Vec<u16> {
+		let mut huffcode = Vec::new();
+		let mut k = 0;
+		let mut code = 0;
+		let mut size = huffsize[0];
+		while huffsize[k] != 0 {
+			while huffsize[k] == size {
+				huffcode.push(code);
+				code += 1;
+				k += 1;
+			}
+			code = code << 1;
+			size += 1;
+		}
+		huffcode
+	}
+}
+
+#[derive(Debug)]
+struct HuffmanCode {
+	code: u16,
+	size: u8,
+	symbol: u8,
 }
 
 #[derive(Debug)]
