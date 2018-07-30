@@ -28,6 +28,10 @@ impl ByteOrder {
             },
         }
     }
+
+    pub fn read_i32(&self, buffer: &[u8], offset: usize) -> i32 {
+        self.read_u32(buffer, offset) as i32
+    }
 }
 
 pub struct BufferReader<'a> {
@@ -62,6 +66,15 @@ impl<'a> BufferReader<'a> {
 		self.bit_offset = 0;
 	}
 
+
+	pub fn skip_to(&mut self, offset: usize) {
+		self.offset = offset;
+	}
+
+	pub fn offset(&self) -> usize {
+		self.offset
+	} 
+
 	pub fn read_u8(&mut self) -> u8 {
 		if self.bit_offset != 0 {
 			panic!("Cannot read u8 from non-zero bit offset");
@@ -70,6 +83,7 @@ impl<'a> BufferReader<'a> {
 		self.offset += 1;
 		val
 	}
+
 	pub fn read_u16(&mut self) -> u16 {
 		if self.bit_offset != 0 {
 			panic!("Cannot read u16 from non-zero bit offset");
@@ -78,11 +92,21 @@ impl<'a> BufferReader<'a> {
 		self.offset += 2;
 		val
 	}
+
 	pub fn read_u32(&mut self) -> u32 {
 		if self.bit_offset != 0 {
 			panic!("Cannot read u32 from non-zero bit offset");
 		}
 		let val = self.byte_order.read_u32(self.buffer, self.offset);
+		self.offset += 4;
+		val
+	}
+
+	pub fn read_i32(&mut self) -> i32 {
+		if self.bit_offset != 0 {
+			panic!("Cannot read i32 from non-zero bit offset");
+		}
+		let val = self.byte_order.read_i32(self.buffer, self.offset);
 		self.offset += 4;
 		val
 	}

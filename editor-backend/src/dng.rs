@@ -1,20 +1,229 @@
 use std::collections::HashMap;
 
-// use ::console::{log, log_u32};
-use ::byte_order::ByteOrder;
+// use ::console::log;
+use ::byte_order::{BufferReader, ByteOrder};
 
-/*
-pub struct Pixel {
-    red: u32,
-    green: u32,
-    blue: u32,
-    alpha: u32,
+#[derive(Debug)]
+pub enum Compression {
+    Uncompressed,
+    Huffman,
+    JpegCompressed,
+    Deflate,
+    PackBits,
+    LossyJpeg,
+    Unknown(u16),
 }
 
-pub struct Image {
-    pixels: [Pixel],
+impl Compression {
+    fn from_u16(val: u16) -> Compression {
+        match val {
+            1 => Compression::Uncompressed,
+            2 => Compression::Huffman,
+            7 => Compression::JpegCompressed,
+            8 => Compression::Deflate,
+            32773 => Compression::PackBits,
+            34892 => Compression::LossyJpeg,
+            _ => Compression::Unknown(val),
+        }
+    }
 }
-*/
+
+#[derive(Debug)]
+pub struct Strip {}
+
+#[derive(Debug)]
+pub enum NewSubfileType {
+    Original,
+    Preview,
+    Unknown(u32),
+}
+
+impl NewSubfileType {
+    fn from_u32(val: u32) -> NewSubfileType {
+        match val {
+            0 => NewSubfileType::Original,
+            1 => NewSubfileType::Preview,
+            _ => NewSubfileType::Unknown(val),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum PhotometricInterpretation {
+    WhiteIsZero,
+    BlackIsZero,
+    RGB,
+    YCbCr,
+    ColorFilterArray,
+    LinearRaw,
+    Unknown(u16),
+}
+
+impl PhotometricInterpretation {
+    fn from_u16(val: u16) -> PhotometricInterpretation {
+        match val {
+            0 => PhotometricInterpretation::WhiteIsZero,
+            1 => PhotometricInterpretation::BlackIsZero,
+            2 => PhotometricInterpretation::RGB,
+            6 => PhotometricInterpretation::YCbCr,
+            32803 => PhotometricInterpretation::ColorFilterArray,
+            34892 => PhotometricInterpretation::LinearRaw,
+            _ => PhotometricInterpretation::Unknown(val),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum PlanarConfiguration {
+    Chunky,
+    Planar,
+    Unknown(u16),
+}
+
+impl PlanarConfiguration {
+    fn from_u16(val: u16) -> PlanarConfiguration {
+        match val {
+            1 => PlanarConfiguration::Chunky,
+            2 => PlanarConfiguration::Planar,
+            _ => PlanarConfiguration::Unknown(val),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum Illumination {
+    Unknown,
+    Daylight,
+    Fluorescent,
+    Tungsten,
+    Flash,
+    FineWeather,
+    CloudyWeather,
+    Shade,
+    DaylightFluorescent,
+    DayWhiteFluorescent,
+    CoolWhiteFluorescent,
+    WhiteFluorescent,
+    StandardLightA,
+    StandardLightB,
+    StandardLightC,
+    D55,
+    D65,
+    D75,
+    D50,
+    StudioTungsten,
+    Other,
+}
+
+impl Illumination {
+    fn from_u16(val: u16) -> Illumination {
+        match val {
+            0 => Illumination::Unknown,
+            1 => Illumination::Daylight,
+            2 => Illumination::Fluorescent,
+            3 => Illumination::Tungsten,
+            4 => Illumination::Flash,
+            9 => Illumination::FineWeather,
+            10 => Illumination::CloudyWeather,
+            11 => Illumination::Shade,
+            12 => Illumination::DaylightFluorescent,
+            13 => Illumination::DayWhiteFluorescent,
+            14 => Illumination::CoolWhiteFluorescent,
+            15 => Illumination::WhiteFluorescent,
+            17 => Illumination::StandardLightA,
+            18 => Illumination::StandardLightB,
+            19 => Illumination::StandardLightC,
+            20 => Illumination::D55,
+            21 => Illumination::D65,
+            22 => Illumination::D75,
+            23 => Illumination::D50,
+            24 => Illumination::StudioTungsten,
+            255 => Illumination::Other,
+            _ => Illumination::Other,
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum CFALayout {
+    Rectangular,
+    StaggeredA,
+    StaggeredB,
+    StaggeredC,
+    StaggeredD,
+    StaggeredE,
+    StaggeredF,
+    StaggeredG,
+    StaggeredH,
+}
+
+impl CFALayout {
+    fn from_u16(val: u16) -> CFALayout {
+        match val {
+            1 => CFALayout::Rectangular,
+            2 => CFALayout::StaggeredA,
+            3 => CFALayout::StaggeredB,
+            4 => CFALayout::StaggeredC,
+            5 => CFALayout::StaggeredD,
+            6 => CFALayout::StaggeredE,
+            7 => CFALayout::StaggeredF,
+            8 => CFALayout::StaggeredG,
+            9 => CFALayout::StaggeredH,
+            _ => CFALayout::Rectangular,
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum Orientation {
+    TopLeft,
+    TopRight,
+    BottomRight,
+    BottomLeft,
+    LeftTop,
+    RightTop,
+    RightBottom,
+    LeftBottom,
+}
+
+impl Orientation {
+    fn from_u16(val: u16) -> Orientation {
+        match val {
+            1 => Orientation::TopLeft,
+            2 => Orientation::TopRight,
+            3 => Orientation::BottomRight,
+            4 => Orientation::BottomLeft,
+            5 => Orientation::LeftTop,
+            6 => Orientation::RightTop,
+            7 => Orientation::RightBottom,
+            8 => Orientation::LeftBottom,
+            _ => Orientation::TopLeft,
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum PreviewColorSpace {
+    Unknown,
+    GrayGamma22,
+    SRGB,
+    AdobeRGB,
+    ProPhotoRGB,
+}
+
+impl PreviewColorSpace {
+    fn from_u32(val: u32) -> PreviewColorSpace {
+        match val {
+            0 => PreviewColorSpace::Unknown,
+            1 => PreviewColorSpace::GrayGamma22,
+            2 => PreviewColorSpace::SRGB,
+            3 => PreviewColorSpace::AdobeRGB,
+            4 => PreviewColorSpace::ProPhotoRGB,
+            _ => PreviewColorSpace::SRGB,
+        }
+    }
+}
+
 
 #[derive(Hash, Eq, Debug, PartialEq, Clone, Copy)]
 pub enum IfdEntryTag {
@@ -66,8 +275,32 @@ pub enum IfdEntryTag {
     CFARepeatPatternDim,
     CFAPattern,
     Copyright,
+    ExposureTime,
     EXIF,
+    ExposureProgram,
+    ISO,
+    SensitivityType,
+    RecommendedExposureIndex,
+    ExifVersion,
+    DateTimeOriginal,
+    CreateDate,
+    ShutterSpeedValue,
+    ExposureCompensation,
+    MeteringMode,
+    Flash,
     ImageNumber,
+    SubSecTimeOriginal,
+    SubSecTimeDigitized,
+    ColorSpace,
+    FocalPlaneXResolution,
+    FocalPlaneYResolution,
+    FocalPlaneResolutionUnit,
+    CustomRendered,
+    ExposureMode,
+    WhiteBalance,
+    SceneCaptureType,
+    SerialNumber,
+    LensSerialNumber,
 
     // DNG Tags:
     DNGVersion,
@@ -163,7 +396,107 @@ pub enum IfdEntryTag {
     Other(u16),
 }
 
+#[derive(Debug)]
+pub enum IfdEntryValue {
+    Ascii(String),
+    Byte(u8),
+    ByteTriple(u8, u8, u8),
+    ByteQuad(u8, u8, u8, u8),
+    Short(u16),
+    ShortPair(u16, u16),
+    ShortTriple(u16, u16, u16),
+    Int(u32),
+    IntTriple(u32, u32, u32),
+    IntQuad(u32, u32, u32, u32),
+    Rational(u32, u32),
+    RationalPair(u32, u32, u32, u32),
+    RationalTriple(u32, u32, u32, u32, u32, u32),
+    RationalQuad(u32, u32, u32, u32, u32, u32, u32, u32),
+    SRational(i32, i32),
+    Compression(Compression),
+    Strips(Vec<Strip>),
+    NewSubfileType(NewSubfileType),
+    PhotometricInterpretation(PhotometricInterpretation),
+    PlanarConfiguration(PlanarConfiguration),
+    Illumination(Illumination),
+    CFALayout(CFALayout),
+    Orientation(Orientation),
+    PreviewColorSpace(PreviewColorSpace),
+    Offset(IfdEntryType, u32, usize),
+}
+
 impl IfdEntryTag {
+    fn parse(&self, reader: &mut BufferReader, entry_type: IfdEntryType, count: u32, offset: usize) -> IfdEntryValue {
+        reader.skip_to(offset);
+        match *self {
+            IfdEntryTag::NewSubfileType => IfdEntryValue::NewSubfileType(NewSubfileType::from_u32(reader.read_u32())),
+            IfdEntryTag::PhotometricInterpretation => IfdEntryValue::PhotometricInterpretation(PhotometricInterpretation::from_u16(reader.read_u16())),
+            IfdEntryTag::Compression => IfdEntryValue::Compression(Compression::from_u16(reader.read_u16())),
+            IfdEntryTag::PlanarConfiguration => IfdEntryValue::PlanarConfiguration(PlanarConfiguration::from_u16(reader.read_u16())),
+            IfdEntryTag::CalibrationIlluminant1
+                | IfdEntryTag::CalibrationIlluminant2 => IfdEntryValue::Illumination(Illumination::from_u16(reader.read_u16())),
+            IfdEntryTag::CFALayout => IfdEntryValue::CFALayout(CFALayout::from_u16(reader.read_u16())),
+            IfdEntryTag::EXIF
+                | IfdEntryTag::SubIFDs
+                | IfdEntryTag::TileOffsets
+                | IfdEntryTag::StripOffsets => IfdEntryValue::Offset(entry_type, count, offset),
+            IfdEntryTag::Orientation => IfdEntryValue::Orientation(Orientation::from_u16(reader.read_u16())),
+            IfdEntryTag::PreviewColorSpace => IfdEntryValue::PreviewColorSpace(PreviewColorSpace::from_u32(reader.read_u32())),
+            _ => {
+                if count == 1 {
+                    match entry_type {
+                        IfdEntryType::Long => return IfdEntryValue::Int(reader.read_u32()),
+                        IfdEntryType::Short => return IfdEntryValue::Short(reader.read_u16()),
+                        IfdEntryType::Byte => return IfdEntryValue::Byte(reader.read_u8()),
+                        IfdEntryType::Rational => return IfdEntryValue::Rational(reader.read_u32(), reader.read_u32()),
+                        IfdEntryType::SRational => return IfdEntryValue::SRational(reader.read_i32(), reader.read_i32()),
+                        _ => ()
+                    }
+                }
+
+                if count == 2 {
+                    match entry_type {
+                        IfdEntryType::Short => return IfdEntryValue::ShortPair(reader.read_u16(), reader.read_u16()),
+                        IfdEntryType::Rational => return IfdEntryValue::RationalPair(reader.read_u32(), reader.read_u32(), reader.read_u32(), reader.read_u32()),
+                        _ => ()
+                    }
+                }
+
+                if count == 3 {
+                    match entry_type {
+                        IfdEntryType::Long => return IfdEntryValue::IntTriple(reader.read_u32(), reader.read_u32(), reader.read_u32()),
+                        IfdEntryType::Short => return IfdEntryValue::ShortTriple(reader.read_u16(), reader.read_u16(), reader.read_u16()),
+                        IfdEntryType::Byte => return IfdEntryValue::ByteTriple(reader.read_u8(), reader.read_u8(), reader.read_u8()),
+                        IfdEntryType::Rational => return IfdEntryValue::RationalTriple(reader.read_u32(), reader.read_u32(), reader.read_u32(), reader.read_u32(), reader.read_u32(), reader.read_u32()),
+                        _ => ()
+                    }
+                }
+
+                if count == 4 {
+                    match entry_type {
+                        IfdEntryType::Long => return IfdEntryValue::IntQuad(reader.read_u32(), reader.read_u32(), reader.read_u32(), reader.read_u32()),
+                        IfdEntryType::Byte => return IfdEntryValue::ByteQuad(reader.read_u8(), reader.read_u8(), reader.read_u8(), reader.read_u8()),
+                        IfdEntryType::Rational => return IfdEntryValue::RationalQuad(reader.read_u32(), reader.read_u32(), reader.read_u32(), reader.read_u32(), reader.read_u32(), reader.read_u32(), reader.read_u32(), reader.read_u32()),
+                        _ => ()
+                    } 
+                }
+
+                if entry_type == IfdEntryType::Ascii {
+                    let mut chars = Vec::new();
+                    for _i in 0..count {
+                        let character = reader.read_u8();
+                        if character == 0x00 {
+                            break;
+                        }
+                        chars.push(character);
+                    }
+                    return IfdEntryValue::Ascii(String::from_utf8(chars).unwrap());
+                }
+                IfdEntryValue::Offset(entry_type, count, offset)
+            },
+        }
+    }
+
     fn from_u16(value: u16) -> IfdEntryTag {
         match value {
             254 => IfdEntryTag::NewSubfileType,
@@ -214,8 +547,32 @@ impl IfdEntryTag {
             33421 => IfdEntryTag::CFARepeatPatternDim,
             33422 => IfdEntryTag::CFAPattern,
             33432 => IfdEntryTag::Copyright,
+            33434 => IfdEntryTag::ExposureTime,
             34665 => IfdEntryTag::EXIF,
+            34850 => IfdEntryTag::ExposureProgram,
+            34855 => IfdEntryTag::ISO,
+            34864 => IfdEntryTag::SensitivityType,
+            34866 => IfdEntryTag::RecommendedExposureIndex,
+            36864 => IfdEntryTag::ExifVersion,
+            36867 => IfdEntryTag::DateTimeOriginal,
+            36868 => IfdEntryTag::CreateDate,
+            37377 => IfdEntryTag::ShutterSpeedValue,
+            37380 => IfdEntryTag::ExposureCompensation,
+            37383 => IfdEntryTag::MeteringMode,
+            37385 => IfdEntryTag::Flash,
             37393 => IfdEntryTag::ImageNumber,
+            37521 => IfdEntryTag::SubSecTimeOriginal,
+            37522 => IfdEntryTag::SubSecTimeDigitized,
+            40961 => IfdEntryTag::ColorSpace,
+            41486 => IfdEntryTag::FocalPlaneXResolution,
+            41487 => IfdEntryTag::FocalPlaneYResolution,
+            41488 => IfdEntryTag::FocalPlaneResolutionUnit,
+            41985 => IfdEntryTag::CustomRendered,
+            41986 => IfdEntryTag::ExposureMode,
+            41987 => IfdEntryTag::WhiteBalance,
+            41990 => IfdEntryTag::SceneCaptureType,
+            42033 => IfdEntryTag::SerialNumber,
+            42037 => IfdEntryTag::LensSerialNumber,
             50706 => IfdEntryTag::DNGVersion,
             50707 => IfdEntryTag::DNGBackwardVersion,
             50708 => IfdEntryTag::UniqueCameraModel,
@@ -356,11 +713,9 @@ pub struct IfdEntry {
     pub offset: usize,
 }
 
-
-
 pub struct Dng<'a> {
     buffer: &'a [u8],
-    pub ifds: Vec<HashMap<IfdEntryTag, IfdEntry>>,
+    pub ifds: Vec<HashMap<IfdEntryTag, IfdEntryValue>>,
     byte_order: ByteOrder,
 }
 
@@ -394,29 +749,40 @@ fn is_offset(entry_type: IfdEntryType, count: u32) -> bool {
     }
 }
 
-
-fn parse_ifd_list(byte_order: ByteOrder, buffer: &[u8], position: &mut usize) -> Vec<HashMap<IfdEntryTag, IfdEntry>> {
-    let mut next_ifd = byte_order.read_u32(buffer, *position) as usize;
+fn parse_ifd_list(reader: &mut BufferReader) -> Vec<HashMap<IfdEntryTag, IfdEntryValue>> {
     let mut ifds = Vec::new();
+
+    let mut next_ifd = reader.read_u32() as usize;
     while next_ifd != 0 {
-        *position = next_ifd;
-
-        let ifd = parse_ifd(byte_order, buffer, position);
-        next_ifd = byte_order.read_u32(buffer, *position) as usize;
-        ifds.push(ifd);
+        reader.skip_to(next_ifd);
+        ifds.push(parse_ifd(reader));
+        next_ifd = reader.read_u32() as usize;
     }
-
 
     let mut new_ifds = Vec::new();
     for i in 0..ifds.len() {
         match ifds[i].get(&IfdEntryTag::SubIFDs) {
-            Some(entry) => {
-                for offset in 0..entry.count {
-                    let this_offset = byte_order.read_u32(buffer, entry.offset + (offset as usize * 4)) as usize;
-                    new_ifds.push(parse_ifd(byte_order, buffer, &mut this_offset.clone()));
+            Some(IfdEntryValue::Offset(_entry_type, count, offset)) => {
+                for individual_offset in 0..*count {
+                    reader.skip_to(offset + (individual_offset as usize * 4));
+                    let this_offset = reader.read_u32() as usize;
+                    reader.skip_to(this_offset);
+                    new_ifds.push(parse_ifd(reader));
                 }
             },
-            None => ()
+            _ => ()
+        }
+
+        match ifds[i].get(&IfdEntryTag::EXIF) {
+            Some(IfdEntryValue::Offset(_entry_type, count, offset)) => {
+                for individual_offset in 0..*count {
+                    reader.skip_to(offset + (individual_offset as usize * 4));
+                    let this_offset = reader.read_u32() as usize;
+                    reader.skip_to(this_offset);
+                    new_ifds.push(parse_ifd(reader));
+                }
+            },
+            _ => ()
         }
     }
 
@@ -424,50 +790,55 @@ fn parse_ifd_list(byte_order: ByteOrder, buffer: &[u8], position: &mut usize) ->
     ifds
 }
 
-
-fn parse_ifd(byte_order: ByteOrder, buffer: &[u8], position: &mut usize) -> HashMap<IfdEntryTag, IfdEntry> {
-    let ifd_entry_count = byte_order.read_u16(buffer, *position);
-    *position += 2;
+fn parse_ifd(reader: &mut BufferReader) -> HashMap<IfdEntryTag, IfdEntryValue> {
+    let ifd_entry_count = reader.read_u16();
     let mut ifd_entries = HashMap::new();
     for _n in 0..ifd_entry_count {
-        let entry = parse_ifd_entry(byte_order, buffer, position);
-        ifd_entries.insert(entry.tag, entry);
+        let (tag, value) = parse_ifd_entry(reader);
+        ifd_entries.insert(tag, value);
     }
 
     ifd_entries
 }
 
-fn parse_ifd_entry(byte_order: ByteOrder, buffer: &[u8], position: &mut usize) -> IfdEntry {
-    *position += 12;
+fn parse_ifd_entry(reader: &mut BufferReader) -> (IfdEntryTag, IfdEntryValue) {
+    let tag = IfdEntryTag::from_u16(reader.read_u16());
+    let entry_type = IfdEntryType::from_u16(reader.read_u16());
+    let count = reader.read_u32();
+    let offset = if is_offset(entry_type, count) {
+        reader.read_u32() as usize
+    } else { 
+        let val = reader.offset();
+        reader.read_u32();
+        val
+    };
 
-    let entry_type = IfdEntryType::from_u16(byte_order.read_u16(buffer, *position - 10));
-    let count = byte_order.read_u32(buffer, *position - 8);
-
-    IfdEntry {
-        tag: IfdEntryTag::from_u16(byte_order.read_u16(buffer, *position - 12)),
-        entry_type: entry_type,
-        count: count,
-        offset: if is_offset(entry_type, count) { byte_order.read_u32(buffer, *position - 4) as usize } 
-            else { *position - 4 },
-    }
+    let prev_offset = reader.offset();
+    let ret_val = (tag, tag.parse(reader, entry_type, count, offset));
+    reader.skip_to(prev_offset);
+    ret_val
 }
 
-pub fn parse_dng(buffer: &[u8], _length: u32) -> Dng {
+#[derive(Debug)]
+pub enum DngParseError {
+    NotADng,
+}
+
+pub fn parse_dng(buffer: &[u8], _length: u32) -> Result<Dng, DngParseError> {
     let byte_order: ByteOrder = if buffer[0] == 0x49 && buffer[1] == 0x49 { ByteOrder::LittleEndian }
         else if buffer[0] == 0x4D && buffer[1] == 0x4D { ByteOrder::BigEndian }
-        else { panic!("File has invalid Byte Order") };
+        else { return Err(DngParseError::NotADng) };
 
-    let mut position: usize = 2;
-    let confirm_dng = byte_order.read_u16(buffer, position);
-    position += 2;
+    let mut reader = BufferReader::new(buffer, byte_order);
+    reader.read_u16(); // This short is the already parsed byte order!
 
-    if confirm_dng != 42 {
-        panic!("File is not a DNG {}", confirm_dng)
+    if reader.read_u16() != 42 {
+        return Err(DngParseError::NotADng)
     }
 
-    Dng {
+    Ok(Dng {
         buffer: buffer,
-        ifds: parse_ifd_list(byte_order, buffer, &mut position),
+        ifds: parse_ifd_list(&mut reader),
         byte_order: byte_order,
-    }
+    })
 }

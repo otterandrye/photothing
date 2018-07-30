@@ -34,8 +34,15 @@ export default class MultiUploader extends React.Component<Props, State> {
         filename: file.name,
         file_type: file.type,
       };
+      const header = localStorage.getItem("header");
+      const token = localStorage.getItem("token");
+      if (!header || !token) {
+        reject(new Error("Not signed in, missing token or header"));
+        return;
+      }
       const xhr = new XMLHttpRequest();
       xhr.open("POST", `${api}/api/upload`);
+      xhr.setRequestHeader(header, token);
       xhr.withCredentials = true;
       xhr.setRequestHeader("Content-type", "application/json");
       xhr.onreadystatechange = () => {
