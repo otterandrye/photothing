@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use ::console::log;
 use ::byte_order::{ByteOrder::BigEndian, BufferReader};
 
@@ -22,11 +20,11 @@ struct FrameHeader {
 }
 
 #[derive(Debug)]
-struct Frame {
+pub struct Frame {
 	precision: u8,
-	y: u16,
-	x: u16,
-	scans: Vec<Scan>,
+	pub y: u16,
+	pub x: u16,
+	pub scans: Vec<Scan>,
 }
 
 #[derive(Debug)]
@@ -62,7 +60,7 @@ impl HuffmanTable {
 		let mut j = 1;
 		let mut huffsize = Vec::new();
 		for i in 0..16 {
-			while j <= n_codes_per_size[i]{
+			while j <= n_codes_per_size[i] {
 				huffsize.push((i as u8) + 1);
 				j += 1;
 			}
@@ -98,12 +96,34 @@ struct HuffmanCode {
 	symbol: u8,
 }
 
+// Computes the ith triangular number
+fn triangular(ith: i32) -> i32 {
+	if ith > 0 {
+		ith * (ith + 1) / 2
+	} else {
+		0
+	}
+}
+
+// Given a width and height of the image, plus x and y coordinates,
+// find the index in JPEG buffer. This takes on the shape of a zig-zag
+// that ensures that the above and left neighbors of any given pixel
+// preceed that given pixel in the ordering.
+// This was a pain in the ass.
+fn index(width: u16, height: u16, x: u16, y: u16) -> usize {
+	let z: i32 = x as i32 + y as i32;
+	let right_offset = z - ((width as i32) - 1);
+	let left_offset = z - ((height as i32) - 1);
+	(triangular(z) + if z % 2 == 1 {
+		(y as i32) - triangular(right_offset) - triangular(left_offset - 1)
+	} else {
+		(x as i32) - triangular(right_offset - 1) - triangular(left_offset)
+	}) as usize
+}
+
 #[derive(Debug)]
-struct Scan {
-	table_mappings: HashMap<u8, u8>,
-	predictor: u8,
-	point_transform: u8,
-	data: HashMap<u8, Vec<u8>>,
+pub struct Scan {
+	pub components: Vec<ComponentInfo>,
 }
 
 #[derive(Debug)]
@@ -209,86 +229,182 @@ fn read_huffman_table(reader: &mut BufferReader) -> (u8, HuffmanTable) {
 	})
 }
 
+#[derive(Debug)]
+pub struct ComponentInfo {
+	id: u8,
+	codes: Vec<HuffmanCode>,
+	pub samples: Vec<u16>,
+}
+
+fn coord_index(width: u16, x: u16, y: u16) -> usize {
+	((width * y) + x) as usize
+}
+
+fn predict_data_unit(data: &Vec<u16>, width: u16, x: u16, y: u16, predictor: u8) -> u16 {
+	if x == 0 && y == 0 {
+		return 1 << (16 - 1); // Technically, this should be the precision, but I'm not wiring that.
+	} else if y == 0 {
+		return data[coord_index(width, x - 1, y)];
+	} else if x == 0 {
+		return data[coord_index(width, x, y - 1)];
+	}
+
+	let a = data[coord_index(width, x - 1, y)];
+	let b = data[coord_index(width, x, y - 1)];
+	let c = data[coord_index(width, x - 1, y - 1)];
+
+	match predictor {
+		1 => a,
+		2 => b,
+		3 => c,
+		4 => a + b - c,
+		5 => a + ((b - c) >> 1),
+		6 => b + ((a - c) >> 1),
+		7 => (a + b) >> 1,
+		_ => panic!("Unsupported"),
+	}
+} 
+
+fn read_data_unit(reader: &mut JpegBitReader, component: &mut ComponentInfo, width: u16, x: u16, y: u16, predictor: u8, point_transform: u8) {
+	let count = decode(&component.codes, reader);
+	let diff = extend(receive(reader, count), count);
+	let prediction = predict_data_unit(&component.samples, width, x, y, predictor);
+	component.samples.push(((i32::from(diff) + i32::from(prediction)) << point_transform) as u16);
+}
+
+fn decode(codes: &Vec<HuffmanCode>, reader: &mut JpegBitReader) -> u8 {
+	let mut code = 0;
+	let mut size = 0;
+	loop {
+		code = code << 1;
+		if reader.read_u1().unwrap() {
+			code += 1
+		}
+		size += 1;
+
+		for hcode in codes.iter() {
+			if hcode.code == code && size == hcode.size {
+				return hcode.symbol
+			} else if hcode.size > size {
+				break;
+			}
+		}
+	}
+}
+
+fn receive(reader: &mut JpegBitReader, count: u8) -> u16 {
+	let mut val: u16 = 0;
+	for _i in 0..count {
+		val = val << 1;
+		if reader.read_u1().unwrap() {
+			val += 1
+		}
+	}
+	val
+}
+
+fn extend(number: u16, size: u8) -> i16 {
+	if size > 0 && number < (1 << (i16::from(size) - 1)) {
+		let negative_one: i16 = -1;
+		let (shifted, _) = negative_one.overflowing_shl(u32::from(size));
+		return (number as i16) + shifted + 1
+	} 
+	number as i16
+}
+
 fn read_scan(reader: &mut BufferReader, tables: &[Option<HuffmanTable>; 4], frame: &FrameHeader) -> Scan {
 	reader.read_u16(); // Eat the length of this section.
 	let component_count = reader.read_u8();
-	let mut table_mappings = HashMap::new();
+
+	let mut components = Vec::with_capacity(component_count as usize);
+
+
 	for _i in 0..component_count {
-		table_mappings.insert(reader.read_u8(), reader.read_u8() >> 4);
+		let component_id = reader.read_u8();
+		let slot = reader.read_u8() >> 4;
+		components.push(ComponentInfo {
+			id: component_id,
+			codes: (&tables[(slot % 4) as usize]).as_ref().unwrap().generate_huffman_codes(),
+			samples: Vec::new(),
+		});
 	}
 
 	let predictor = reader.read_u8();
 	reader.read_u8(); // Eat "End of spectral selection" byte
 	let point_transform = reader.read_u8();
 
-	let mut data = HashMap::new();
+	let mut bitreader = JpegBitReader::new(reader);
 
-	for i in 0..component_count {
-		let slot = table_mappings.get(&i).unwrap();
-		let table = (&tables[(slot % 4) as usize]).as_ref().unwrap();
-		let code_list = table.generate_huffman_codes();
-
-		let mut component_data = Vec::new();
-
-		let mut code: u16 = 0;
-		let mut code_size: u8 = 0;
-
-
-		// This condition isn't really right... Need to account for sampling and precision
-		while (component_data.len() as u16) < frame.x * frame.y {
-			if code_size > 16 {
-				// This is a temporary hack.
-				break;
-			}
-			code = code << 1;
-			code_size += 1;
-			if reader.read_u1() {
-				code += 1
-			}
-
-			//log(&format!("code: {:#b} {:#?}", code, code_size));
-
-
-			for hcode in code_list.iter() {
-				//log(&format!("hcode: {:#b} {:#?}", hcode.code, hcode.size));
-
-				if hcode.code == code && code_size == hcode.size {
-					component_data.push(hcode.symbol);
-					code_size = 0;
-					code = 0;
-				} else if hcode.size > code_size {
-					break;
-				}
-			}
+	let mut x = 0;
+	let mut y = 0;
+	while (x < frame.x) && (y < frame.y) {
+		// Read an MCU!
+		//log(&format!("Reading ({}, {})", x, y));
+		for mut component in components.iter_mut() {
+			read_data_unit(&mut bitreader, &mut component, frame.x, x, y, predictor, point_transform);
 		}
-
-		log(&format!("Found data with {} bytes", component_data.len()));
-
-		data.insert(i, component_data);
+		x += 1;
+		if x == frame.x {
+			x = 0;
+			y += 1;
+		}
 	}
 
-	reader.reset_bit_offset();
-
-	// So now the bytes here are just... huffman coded components?
-	// I think I only know the number of bytes I have post-decode here...
-	// So I'll need to do huffman decode on-the-fly?
-	// Based on what I've read so far, it seems like I'll end up with..
-	//   X * Y + X * Y huffman coded bytes?
-
 	Scan {
-		table_mappings: table_mappings,
-		predictor: predictor,
-		point_transform: point_transform,
-		data: data,
+		components: components,
 	}
 }
 
+#[derive(Debug)]
+enum JpegBitReaderError {
+	DNLMarker,
+	IllegalMarker,
+}
+
+struct JpegBitReader<'i, 'u: 'i> {
+	byte_reader: &'i mut BufferReader<'u>,
+	byte_buffer: u8,
+	bit_offset: u8,
+}
+
+impl <'i, 'u> JpegBitReader<'i, 'u> {
+	fn new(byte_reader: &'i mut BufferReader<'u>) -> JpegBitReader<'i, 'u> {
+		JpegBitReader {
+			byte_reader: byte_reader,
+			bit_offset: 0,
+			byte_buffer: 0,
+		}
+	}
+
+	fn read_u1(&mut self) -> Result<bool, JpegBitReaderError> {
+		if self.bit_offset == 0 {
+			self.byte_buffer = self.byte_reader.read_u8();
+			self.bit_offset = 8;
+			if self.byte_buffer == 0xFF {
+				let marker = self.byte_reader.read_u8();
+				if marker != 0 {
+					if marker == (DNL & 0x00FF) as u8 {
+						return Err(JpegBitReaderError::DNLMarker);
+					} else {
+						return Err(JpegBitReaderError::IllegalMarker);
+					}
+				}
+			}
+		}
+		let bit = self.byte_buffer >> 7;
+		self.bit_offset -= 1;
+		self.byte_buffer = self.byte_buffer << 1;
+		Ok(bit == 1)
+	}
+}
+
+#[derive(Debug)]
 pub enum JpegParseError {
 	UnsupportedJpeg,
 	NotAJpeg,
 }
 
-pub fn parse_lossless_jpeg(buffer: &[u8]) -> Result<Image, JpegParseError> {
+pub fn parse_lossless_jpeg(buffer: &[u8]) -> Result<Frame, JpegParseError> {
 	let mut reader = BufferReader::new(buffer, BigEndian);
 	let soi = reader.read_u16();
 	if soi != SOI {
@@ -302,11 +418,11 @@ pub fn parse_lossless_jpeg(buffer: &[u8]) -> Result<Image, JpegParseError> {
 
 	let frame = read_frame(&mut reader);
 	log(&format!("Found {:#?}", frame));
-
-	Ok(Image {
+	return Ok(frame);
+	/*Ok(Image {
 		x: frame.x,
 		y: frame.y,
 		precision: frame.precision,
-		components: Vec::new(),
-	})
+		components: frame.scan[0].components,
+	})*/
 }
