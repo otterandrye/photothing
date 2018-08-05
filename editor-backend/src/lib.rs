@@ -8,35 +8,33 @@ use std::panic;
 mod console;
 mod byte_order;
 mod lossless_jpeg;
+mod grid;
 
 pub use console::*;
 use dng::{IfdEntryTag, IfdEntryValue};
 use lossless_jpeg::parse_lossless_jpeg;
+use grid::Grid;
+use grid::tile::Tile;
+use grid::fixed_black_level::FixedBlackLevel;
+use grid::fixed_white_level::FixedWhiteLevel;
+use grid::pixelate::Pixelate;
+use grid::composite_tile_grid::CompositeTileGrid;
+use grid::crop::Crop;
 
-pub struct Pixel {
+
+#[derive(Debug)]
+pub struct CanvasPixel {
 	r: u8,
 	g: u8,
 	b: u8,
 	a: u8,
 }
 
-impl Pixel {
-    fn red(&mut self, val: u8) {
-        self.r = val;
-    }
-    fn green(&mut self, val: u8) {
-    	self.g = val;
-    }
-    fn blue(&mut self, val: u8) {
-    	self.b = val;
-    }
-}
-
 #[wasm_bindgen]
 pub struct Preview {
     width: u32,
     height: u32,
-    pixels: Vec<Pixel>,
+    pixels: Vec<CanvasPixel>,
 }
 
 fn hook(info: &panic::PanicInfo) {
@@ -46,9 +44,10 @@ fn hook(info: &panic::PanicInfo) {
 #[wasm_bindgen]
 impl Preview {
     pub fn new(width: u32, height: u32) -> Preview {
+    	time("Blue render");
         let pixels = (0..width * height)
             .map(|_i| {
-                Pixel {
+                CanvasPixel {
                 	r: 100,
                 	g: 100,
                 	b: 255,
@@ -56,7 +55,7 @@ impl Preview {
                 }
             })
             .collect();
-
+        timeEnd("Blue render");
         Preview {
             width,
             height,
@@ -69,51 +68,89 @@ impl Preview {
     	// It should only be called once, but that's a bit tricky.
     	panic::set_hook(Box::new(hook));
 
+    	time("DNG Parse");
     	let dng = parse_dng(tiff, length).unwrap();
-
     	log(&format!("{:#?}", dng.ifds));
+    	timeEnd("DNG Parse");
 
     	for ifd in &dng.ifds {
-    		log("NEW IFD");
-
 			match ifd.get(&IfdEntryTag::TileOffsets) {
-				Some(IfdEntryValue::Offset(entry_type, count, offset)) => {					
-					//let first_tile_offset = dng.read_u32(*offset) as usize;
-
-					let mut tile_offset = dng.read_u32(*offset) as usize;
-
-					for _i in 0..225 {
-						tile_offset = dng.read_u32(*offset) as usize;
+				Some(IfdEntryValue::Offset(_entry_type, count, offset)) => {	
+					if *count != 425 {
+						// There are other IFDs here I don't care about. 
+						// In the future, I should check the Subtype.
+						return;
 					}
 
-					let frame = parse_lossless_jpeg(&tiff[tile_offset..]);
+					// Some hard coded values I should probably read from the DNG:
+					// The DNG file says 14558, sensor values max ~16384
+					let white_level = 14558;
+					// The DNG file says 2048, sensor values min ~1980
+					let black_level = 2048;
+					let image_width = 6384;
+					let image_height = 4224;
+					let tile_count = 425;
+					let tile_width = 256;
+					let tile_height = 256;
 
-					match frame {
-						Ok(frame) => {
-							for (component_id, component) in frame.scans[0].components.iter().enumerate() {
-								for (idx, val) in component.samples.iter().enumerate() {
-									let x: u32 = (idx % 256) as u32;
-									let y: u32 = 2*((idx as u32) >> 8) + (component_id as u32);
-									self.pixels[(y*self.width + x) as usize] = Pixel {
-										r: ((*val as f32) / (<u16>::max_value() as f32) * (<u8>::max_value() as f32)) as u8,
-										g: ((*val as f32) / (<u16>::max_value() as f32) * (<u8>::max_value() as f32)) as u8,
-										b: ((*val as f32) / (<u16>::max_value() as f32) * (<u8>::max_value() as f32)) as u8,
-										a: 255
-									};
+					time("Data Parse");
+					let mut tiles = Vec::with_capacity(tile_count);
+					for i in 0..tile_count {
+						let tile_offset = dng.read_u32(*offset + 4 * i) as usize;
+
+						time("Tile Parse");
+						let frame = parse_lossless_jpeg(&tiff[tile_offset..]);
+						timeEnd("Tile Parse");
+						time("Tile Map");
+						match frame {
+							Ok(frame) => {
+								let mut samples = vec![0; tile_width as usize * tile_height as usize];
+								for (component_id, component) in frame.scans[0].components.iter().enumerate() {
+									for (idx, val) in component.samples.iter().enumerate() {
+										samples[2 * idx + component_id] = *val;
+									}
 								}
+
+								tiles.push(Tile::new(tile_width, tile_height, samples));
+							},
+							Err(msg) => {
+								log(&format!("{:?}", msg));
+							},
+						}
+						timeEnd("Tile Map");
+					}
+					timeEnd("Data Parse");
+
+					let composite = CompositeTileGrid::new(image_width, image_height, tile_width, tile_height, tiles);
+					let cropped = Crop::new(120, 44, composite.width(), composite.height(), &composite);
+					let blackleveled = FixedBlackLevel::new(black_level, &cropped);
+					let whiteleveled = FixedWhiteLevel::new(white_level - black_level, &blackleveled);
+					// So far I'm not scaling as a separate step
+					//let scaled = SampleScale::new(&whiteleveled);
+					// Pixelate also handles the CFA for now
+					let pixelated = Pixelate::new(&whiteleveled);
+
+					time("Render");
+					for x in 0..pixelated.width() {
+						for y in 0..pixelated.height() {
+							let internal_pixel = pixelated.get(x, y);
+							let px_offset = (y as u32 * self.width + x as u32) as usize;
+							self.pixels[px_offset] = CanvasPixel {
+								r: internal_pixel.red,
+								g: internal_pixel.green,
+								b: internal_pixel.blue,
+								a: 255,
 							}
 						}
-						_ => (),
 					}
+					timeEnd("Render");
 				},
 				_ => ()
 			}
     	}
-
-		//log(&format!("First IFD entry count: {:#?}", parse_dng(tiff, length)));
     }
 
-    pub fn pixels(&self) -> *const Pixel {
+    pub fn pixels(&self) -> *const CanvasPixel {
         self.pixels.as_ptr()
     }
 }

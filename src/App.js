@@ -23,8 +23,8 @@ export default class App extends React.Component<Props, State> {
         {this.state.selected && (
           <EditorPreview
             input={this.state.selected}
-            height={256}
-            width={256}
+            height={264}
+            width={399}
             scale={1}
           />
         )}

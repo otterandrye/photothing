@@ -45,7 +45,7 @@ impl HuffmanTable {
 	fn generate_huffman_codes(&self) -> Vec<HuffmanCode> {
 		let huffsize = self.generate_size_table(&self.number_of_codes);
 		let huffcode = self.generate_code_table(&huffsize);
-		let mut codelist = Vec::new();
+		let mut codelist = Vec::with_capacity(16);
 		for i in 0..huffcode.len() {
 			codelist.push(HuffmanCode{
 				code: huffcode[i],
@@ -58,7 +58,7 @@ impl HuffmanTable {
 
 	fn generate_size_table(&self, n_codes_per_size: &[u8]) -> Vec<u8> {
 		let mut j = 1;
-		let mut huffsize = Vec::new();
+		let mut huffsize = Vec::with_capacity(16);
 		for i in 0..16 {
 			while j <= n_codes_per_size[i] {
 				huffsize.push((i as u8) + 1);
@@ -70,7 +70,7 @@ impl HuffmanTable {
 	}
 
 	fn generate_code_table(&self, huffsize: &Vec<u8>) -> Vec<u16> {
-		let mut huffcode = Vec::new();
+		let mut huffcode = Vec::with_capacity(16);
 		let mut k = 0;
 		let mut code = 0;
 		let mut size = huffsize[0];
@@ -220,7 +220,7 @@ fn read_huffman_table(reader: &mut BufferReader) -> (u8, HuffmanTable) {
 			reader.read_u8(), reader.read_u8(), reader.read_u8(), reader.read_u8(),
 		],
 		values: {
-			let mut values = Vec::new();
+			let mut values = Vec::with_capacity(16);
 			for _i in 0..length - 19 {
 				values.push(reader.read_u8());
 			}
@@ -325,7 +325,7 @@ fn read_scan(reader: &mut BufferReader, tables: &[Option<HuffmanTable>; 4], fram
 		components.push(ComponentInfo {
 			id: component_id,
 			codes: (&tables[(slot % 4) as usize]).as_ref().unwrap().generate_huffman_codes(),
-			samples: Vec::new(),
+			samples: Vec::with_capacity((frame.x * frame.y) as usize),
 		});
 	}
 
@@ -417,7 +417,6 @@ pub fn parse_lossless_jpeg(buffer: &[u8]) -> Result<Frame, JpegParseError> {
 	}
 
 	let frame = read_frame(&mut reader);
-	log(&format!("Found {:#?}", frame));
 	return Ok(frame);
 	/*Ok(Image {
 		x: frame.x,

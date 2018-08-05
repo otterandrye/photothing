@@ -22,14 +22,17 @@ export default class EditorPreview extends React.Component<Props> {
     import("./editor").then(({ Preview, memory }) => {
       const elmt = this.canvas.current;
       if (elmt) {
-        elmt.height = this.props.height;
-        elmt.width = this.props.width;
+        elmt.height = this.getVPixelHeight(); // this.props.height;
+        elmt.width = this.getVPixelWidth(); // this.props.width;
         const ctx = elmt.getContext("2d");
+        // $FlowFixMe
+        ctx.webkitImageSmoothingEnabled = false;
+        ctx.imageSmoothingEnabled = false;
         ctx.scale(this.props.scale, this.props.scale);
 
         const preview = Preview.new(
-          this.getVPixelHeight(),
           this.getVPixelWidth(),
+          this.getVPixelHeight(),
         );
         this.draw(ctx, memory, preview.pixels());
 
@@ -44,11 +47,10 @@ export default class EditorPreview extends React.Component<Props> {
     });
   }
 
-  getVPixelHeight = () => Math.ceil(this.props.height * this.props.scale);
-  getVPixelWidth = () => Math.ceil(this.props.width * this.props.scale);
+  getVPixelHeight = () => 4224; // Math.ceil(this.props.height * this.props.scale);
+  getVPixelWidth = () => 6384; // Math.ceil(this.props.width * this.props.scale);
   getVPixelCount = () => this.getVPixelHeight() * this.getVPixelWidth();
   draw = (ctx: CanvasRenderingContext2D, memory, pixels) => {
-    console.log(`Drawing from memory at ${pixels}`);
     const imageData = new ImageData(
       new Uint8ClampedArray(memory.buffer, pixels, this.getVPixelCount() * 4),
       this.getVPixelWidth(),
@@ -62,6 +64,7 @@ export default class EditorPreview extends React.Component<Props> {
       <canvas
         ref={this.canvas}
         style={{
+          imageRendering: "pixelated",
           height: `${this.props.height}px`,
           width: `${this.props.width}px`,
         }}
