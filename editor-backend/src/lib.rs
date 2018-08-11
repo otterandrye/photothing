@@ -21,6 +21,10 @@ use grid::pixelate::Pixelate;
 use grid::composite_tile_grid::CompositeTileGrid;
 use grid::crop::Crop;
 
+use grid::white_balance::WhiteBalance;
+use grid::white_scale::WhiteScale;
+use grid::displayable::Displayable;
+
 
 #[derive(Debug)]
 pub struct CanvasPixel {
@@ -124,11 +128,24 @@ impl Preview {
 					let composite = CompositeTileGrid::new(image_width, image_height, tile_width, tile_height, tiles);
 					let cropped = Crop::new(120, 44, composite.width(), composite.height(), &composite);
 					let blackleveled = FixedBlackLevel::new(black_level, &cropped);
-					let whiteleveled = FixedWhiteLevel::new(white_level - black_level, &blackleveled);
+					//let whiteleveled = FixedWhiteLevel::new(white_level - black_level, &blackleveled);
 					// So far I'm not scaling as a separate step
 					//let scaled = SampleScale::new(&whiteleveled);
 					// Pixelate also handles the CFA for now
-					let pixelated = Pixelate::new(&whiteleveled);
+
+					let whitescaled = WhiteScale::new(white_level, black_level, &blackleveled);
+					// This varries by photo, but for now picking:
+					// AsShotNeutral: RationalTriple(
+            		// 	440430,
+            		// 	1000000,
+            		// 	1000000,
+            		// 	1000000,
+            		// 	620230,
+            		// 	1000000
+        			// ),
+					let whitebalanced = WhiteBalance::new(440430.0 / 1000000.0, 1.0, 620230.0 / 1000000.0, &whitescaled);
+					let displayable = Displayable::new(&whitebalanced);
+					let pixelated = Pixelate::new(&displayable);
 
 					time("Render");
 					for x in 0..pixelated.width() {

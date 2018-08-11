@@ -10,3 +10,7 @@ pub mod fixed_white_level;
 pub mod pixelate;
 pub mod composite_tile_grid;
 pub mod crop;
+
+pub mod displayable;
+pub mod white_balance;
+pub mod white_scale;
