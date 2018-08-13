@@ -93,6 +93,30 @@ export default class Login extends React.Component<Props, State> {
     xhr.send(JSON.stringify(data));
   };
 
+  startPwReset = (e: SyntheticEvent<*>) => {
+    e.preventDefault();
+    const email = encodeURIComponent(this.state.email);
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `${this.props.api}/api/reset_password/${email}`);
+    xhr.setRequestHeader("Content-type", "application/json");
+    xhr.onreadystatechange = () => {
+      if (xhr.readyState === 4) {
+        if (xhr.status === 200) {
+          this.setState({
+            message: "Initiated password reset, check your email",
+            loggedIn: false,
+          });
+        } else {
+          this.setState({
+            message: "Failed to start the password reset process, check logs",
+            loggedIn: false,
+          });
+        }
+      }
+    };
+    xhr.send("{}");
+  };
+
   loginData = (): LoginRegister => ({
     email: this.state.email,
     password: this.state.password,
@@ -116,6 +140,9 @@ export default class Login extends React.Component<Props, State> {
         </button>
         <button type="submit" onClick={this.doRegister}>
           Register
+        </button>
+        <button type="submit" onClick={this.startPwReset}>
+          Reset Password
         </button>
       </form>
     ) : (
