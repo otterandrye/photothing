@@ -83,6 +83,11 @@ export default class Login extends React.Component<Props, State> {
     });
   };
 
+  doLogout = () => {
+    localStorage.clear();
+    window.location.reload();
+  };
+
   doRegister = (e: SyntheticEvent<*>) => {
     e.preventDefault();
     const data = this.loginData();
@@ -156,6 +161,7 @@ export default class Login extends React.Component<Props, State> {
           this.setState({
             message: `Reset request: '${res.reset}' please log in`,
             loggedIn: false,
+            finishPwReset: false,
           });
         } else {
           this.setState({
@@ -179,12 +185,21 @@ export default class Login extends React.Component<Props, State> {
     const pwChange = (e: SyntheticKeyboardEvent<HTMLInputElement>) =>
       this.setState({ password: e.currentTarget.value || "" });
 
-    const buttons = this.state.finishPwReset ? (
-      <button type="submit" onClick={this.finishPwReset}>
-        Finish Password Reset
-      </button>
-    ) : (
-      [
+    let buttons;
+    if (this.state.finishPwReset) {
+      buttons = (
+        <button type="submit" onClick={this.finishPwReset}>
+          Finish Password Reset
+        </button>
+      );
+    } else if (this.state.loggedIn) {
+      buttons = (
+        <button type="submit" onClick={this.doLogout}>
+          Log out
+        </button>
+      );
+    } else {
+      buttons = [
         <button key="login" type="submit" onClick={this.doLogin}>
           Login
         </button>,
@@ -194,8 +209,8 @@ export default class Login extends React.Component<Props, State> {
         <button key="reset" type="submit" onClick={this.startPwReset}>
           Start Password Reset
         </button>,
-      ]
-    );
+      ];
+    }
 
     const form = !this.state.loggedIn ? (
       <form>
@@ -208,7 +223,7 @@ export default class Login extends React.Component<Props, State> {
         {buttons}
       </form>
     ) : (
-      <div />
+      <div>{buttons}</div>
     );
     return (
       <div>
