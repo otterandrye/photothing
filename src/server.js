@@ -22,7 +22,7 @@ function env(key): string {
 const API_SERVER = env("API_SERVER");
 
 server.set("x-powered-by", false);
-server.get("/", (req, res) => {
+const renderReact = (req, res) => {
   res.write("<!doctype html><html>");
   const stream = ReactDomServer.renderToNodeStream(
     <Page
@@ -38,7 +38,11 @@ server.get("/", (req, res) => {
   stream.on("end", () => {
     res.end("</html>");
   });
-});
+};
+
+// TODO: this is janky
+server.get("/", renderReact);
+server.get("/password_reset", renderReact);
 
 express.static.mime.define({ "application/wasm": ["wasm"] });
 server.use("/static", express.static("dist"));

@@ -1,4 +1,5 @@
 // @flow
+/* eslint-disable no-restricted-globals */
 
 import * as React from "react";
 
@@ -11,6 +12,7 @@ type State = {|
   password: string,
   message: string | null,
   loggedIn: boolean,
+  finishPwReset: boolean,
 |};
 
 type LoginRegister = {|
@@ -25,12 +27,25 @@ type UserCredentials = {|
 |};
 
 export default class Login extends React.Component<Props, State> {
-  state: State = { email: "", password: "", message: null, loggedIn: false };
+  state: State = {
+    email: "",
+    password: "",
+    message: null,
+    loggedIn: false,
+    finishPwReset: false,
+  };
 
   componentDidMount() {
     const email = localStorage.getItem("email");
     if (email) {
+      console.log("logging in from localStorage");
       this.login(email);
+    }
+    const params = new URLSearchParams(location.search.slice(1));
+    const emailForPwReset = params.get("email");
+    if (emailForPwReset) {
+      console.log("Setting email from PW reset url param");
+      this.setState({ email: emailForPwReset, finishPwReset: true });
     }
   }
 
@@ -105,6 +120,7 @@ export default class Login extends React.Component<Props, State> {
           this.setState({
             message: "Initiated password reset, check your email",
             loggedIn: false,
+            password: "",
           });
         } else {
           this.setState({
@@ -117,6 +133,41 @@ export default class Login extends React.Component<Props, State> {
     xhr.send("{}");
   };
 
+  finishPwReset = (e: SyntheticEvent<*>) => {
+    e.preventDefault();
+    const params = new URLSearchParams(location.search.slice(1));
+    const id = params.get("id") || "";
+    const email = params.get("email") || "";
+    if (!id || !email) {
+      return;
+    }
+    this.setState({ email }, () => this.sendPwReset(id));
+  };
+
+  sendPwReset = (id: string) => {
+    const data = this.loginData();
+    const xhr = new XMLHttpRequest();
+    xhr.open("PUT", `${this.props.api}/api/reset_password/${id}`);
+    xhr.setRequestHeader("Content-type", "application/json");
+    xhr.onreadystatechange = () => {
+      if (xhr.readyState === 4) {
+        const res = JSON.parse(xhr.responseText);
+        if (xhr.status === 200) {
+          this.setState({
+            message: `Reset request: '${res.reset}' please log in`,
+            loggedIn: false,
+          });
+        } else {
+          this.setState({
+            message: `Reset request failed with ${res.message}`,
+            loggedIn: false,
+          });
+        }
+      }
+    };
+    xhr.send(JSON.stringify(data));
+  };
+
   loginData = (): LoginRegister => ({
     email: this.state.email,
     password: this.state.password,
@@ -127,6 +178,25 @@ export default class Login extends React.Component<Props, State> {
       this.setState({ email: e.currentTarget.value || "" });
     const pwChange = (e: SyntheticKeyboardEvent<HTMLInputElement>) =>
       this.setState({ password: e.currentTarget.value || "" });
+
+    const buttons = this.state.finishPwReset ? (
+      <button type="submit" onClick={this.finishPwReset}>
+        Finish Password Reset
+      </button>
+    ) : (
+      [
+        <button key="login" type="submit" onClick={this.doLogin}>
+          Login
+        </button>,
+        <button key="reg" type="submit" onClick={this.doRegister}>
+          Register
+        </button>,
+        <button key="reset" type="submit" onClick={this.startPwReset}>
+          Start Password Reset
+        </button>,
+      ]
+    );
+
     const form = !this.state.loggedIn ? (
       <form>
         <input type="email" value={this.state.email} onChange={emailChange} />
@@ -135,15 +205,7 @@ export default class Login extends React.Component<Props, State> {
           value={this.state.password}
           onChange={pwChange}
         />
-        <button type="submit" onClick={this.doLogin}>
-          Login
-        </button>
-        <button type="submit" onClick={this.doRegister}>
-          Register
-        </button>
-        <button type="submit" onClick={this.startPwReset}>
-          Reset Password
-        </button>
+        {buttons}
       </form>
     ) : (
       <div />
