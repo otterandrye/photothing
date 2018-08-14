@@ -14,3 +14,4 @@ pub mod crop;
 pub mod displayable;
 pub mod white_balance;
 pub mod white_scale;
+pub mod dual_component_tile;

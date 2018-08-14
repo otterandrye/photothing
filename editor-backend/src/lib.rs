@@ -24,7 +24,7 @@ use grid::crop::Crop;
 use grid::white_balance::WhiteBalance;
 use grid::white_scale::WhiteScale;
 use grid::displayable::Displayable;
-
+use grid::dual_component_tile::DualComponentTile;
 
 #[derive(Debug)]
 pub struct CanvasPixel {
@@ -103,25 +103,18 @@ impl Preview {
 						let tile_offset = dng.read_u32(*offset + 4 * i) as usize;
 
 						time("Tile Parse");
-						let frame = parse_lossless_jpeg(&tiff[tile_offset..]);
+						let mut frame = parse_lossless_jpeg(&tiff[tile_offset..]);
 						timeEnd("Tile Parse");
-						time("Tile Map");
 						match frame {
-							Ok(frame) => {
-								let mut samples = vec![0; tile_width as usize * tile_height as usize];
-								for (component_id, component) in frame.scans[0].components.iter().enumerate() {
-									for (idx, val) in component.samples.iter().enumerate() {
-										samples[2 * idx + component_id] = *val;
-									}
-								}
+							Ok(mut frame) => {
+								let tile = DualComponentTile::new(tile_width, tile_height, frame);
 
-								tiles.push(Tile::new(tile_width, tile_height, samples));
+								tiles.push(tile);
 							},
 							Err(msg) => {
 								log(&format!("{:?}", msg));
 							},
 						}
-						timeEnd("Tile Map");
 					}
 					timeEnd("Data Parse");
 
@@ -148,8 +141,8 @@ impl Preview {
 					let pixelated = Pixelate::new(&displayable);
 
 					time("Render");
-					for x in 0..pixelated.width() {
-						for y in 0..pixelated.height() {
+					for y in 0..pixelated.height() {
+						for x in 0..pixelated.width() {
 							let internal_pixel = pixelated.get(x, y);
 							let px_offset = (y as u32 * self.width + x as u32) as usize;
 							self.pixels[px_offset] = CanvasPixel {

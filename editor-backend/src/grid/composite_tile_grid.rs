@@ -1,6 +1,6 @@
 use grid::Grid;
 
-use grid::tile::Tile;
+use grid::dual_component_tile::DualComponentTile;
 
 pub struct CompositeTileGrid {
 	tile_count_x: u16,
@@ -8,11 +8,11 @@ pub struct CompositeTileGrid {
 	image_height: u16,
 	tile_width: u16,
 	tile_height: u16,
-	tiles: Vec<Tile>,
+	tiles: Vec<DualComponentTile>,
 }
 
 impl CompositeTileGrid {
-	pub fn new(image_width: u16, image_height: u16, tile_width: u16, tile_height: u16, tiles: Vec<Tile>) -> CompositeTileGrid {
+	pub fn new(image_width: u16, image_height: u16, tile_width: u16, tile_height: u16, tiles: Vec<DualComponentTile>) -> CompositeTileGrid {
 		let mut tile_count_x = image_width / tile_width;
 		if image_width % tile_width != 0 {
 			tile_count_x += 1
