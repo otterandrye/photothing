@@ -9,7 +9,7 @@ type Props = {|
 |};
 
 type State = {|
-  photos: Array<{ uuid: string, cdn_url: string }>,
+  photos: Array<{ uuid: string, url: string }>,
 |};
 
 export default class PhotoList extends React.Component<Props, State> {
@@ -30,7 +30,7 @@ export default class PhotoList extends React.Component<Props, State> {
   }
   render() {
     return this.state.photos.map(photo => (
-      <img src={photo.cdn_url} alt={photo.uuid} />
+      <img src={photo.url} alt={photo.uuid} />
     ));
   }
 }
