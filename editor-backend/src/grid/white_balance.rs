@@ -1,5 +1,5 @@
 use grid::Grid;
-1
+
 pub struct WhiteBalance<'a> {
 	red_balance: f32,
 	green_balance: f32,
