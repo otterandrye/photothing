@@ -5,6 +5,7 @@ import "./App.css";
 import EditorPreview from "./EditorPreview";
 import Login from "./Login";
 import MultiUploader from "./MultiUploader";
+import PhotoList from "./PhotoList";
 import type { AuthContext } from "./api";
 
 type State = {|
@@ -75,6 +76,7 @@ export default class App extends React.Component<Props, State> {
               authContext={this.state.auth}
               edit={file => this.setState({ selected: file })}
             />
+            <PhotoList api={this.props.api} authContext={this.state.auth} />
           </React.Fragment>
         )}
       </React.Fragment>
