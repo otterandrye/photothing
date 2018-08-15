@@ -2,16 +2,19 @@
 /* eslint-disable no-restricted-globals */
 
 import * as React from "react";
+import { type AuthContext } from "./api";
 
 type Props = {|
   api: string,
+  authContext: AuthContext | null,
+  authenticate: AuthContext => any,
+  logout: () => any,
 |};
 
 type State = {|
   email: string,
   password: string,
   message: string | null,
-  loggedIn: boolean,
   finishPwReset: boolean,
 |};
 
@@ -31,16 +34,10 @@ export default class Login extends React.Component<Props, State> {
     email: "",
     password: "",
     message: null,
-    loggedIn: false,
     finishPwReset: false,
   };
 
   componentDidMount() {
-    const email = localStorage.getItem("email");
-    if (email) {
-      console.log("logging in from localStorage");
-      this.login(email);
-    }
     const params = new URLSearchParams(location.search.slice(1));
     const emailForPwReset = params.get("email");
     if (emailForPwReset) {
@@ -59,33 +56,21 @@ export default class Login extends React.Component<Props, State> {
     xhr.onreadystatechange = () => {
       if (xhr.readyState === 4) {
         if (xhr.status === 200) {
-          this.login(data.email);
-          // _sigh_ maybe time for some lightweight state to stash these
+          this.setState({ message: null });
           const login: UserCredentials = JSON.parse(xhr.responseText);
-          localStorage.setItem("header", login.header);
-          localStorage.setItem("token", login.pt_auth);
-          localStorage.setItem("email", login.email);
+          this.props.authenticate({
+            header: login.header,
+            token: login.pt_auth,
+            email: login.email,
+          });
         } else {
           this.setState({
             message: `Login failed with status=${xhr.status}`,
-            loggedIn: false,
           });
         }
       }
     };
     xhr.send(JSON.stringify(data));
-  };
-
-  login = (email: string) => {
-    this.setState({
-      message: `Welcome, ${email}`,
-      loggedIn: true,
-    });
-  };
-
-  doLogout = () => {
-    localStorage.clear();
-    window.location.reload();
   };
 
   doRegister = (e: SyntheticEvent<*>) => {
@@ -99,13 +84,11 @@ export default class Login extends React.Component<Props, State> {
         if (xhr.status === 200) {
           this.setState({
             message: `Registration succeeded, please log in`,
-            loggedIn: false,
           });
         } else {
           const loginResponse = JSON.parse(xhr.responseText);
           this.setState({
             message: `Registration failed with ${loginResponse.message}`,
-            loggedIn: false,
           });
         }
       }
@@ -124,13 +107,11 @@ export default class Login extends React.Component<Props, State> {
         if (xhr.status === 200) {
           this.setState({
             message: "Initiated password reset, check your email",
-            loggedIn: false,
             password: "",
           });
         } else {
           this.setState({
             message: "Failed to start the password reset process, check logs",
-            loggedIn: false,
           });
         }
       }
@@ -160,13 +141,11 @@ export default class Login extends React.Component<Props, State> {
         if (xhr.status === 200) {
           this.setState({
             message: `Reset request: '${res.reset}' please log in`,
-            loggedIn: false,
             finishPwReset: false,
           });
         } else {
           this.setState({
             message: `Reset request failed with ${res.message}`,
-            loggedIn: false,
           });
         }
       }
@@ -192,9 +171,9 @@ export default class Login extends React.Component<Props, State> {
           Finish Password Reset
         </button>
       );
-    } else if (this.state.loggedIn) {
+    } else if (this.props.authContext) {
       buttons = (
-        <button type="submit" onClick={this.doLogout}>
+        <button type="submit" onClick={this.props.logout}>
           Log out
         </button>
       );
@@ -212,7 +191,7 @@ export default class Login extends React.Component<Props, State> {
       ];
     }
 
-    const form = !this.state.loggedIn ? (
+    const form = !this.props.authContext ? (
       <form>
         <input type="email" value={this.state.email} onChange={emailChange} />
         <input
@@ -228,7 +207,12 @@ export default class Login extends React.Component<Props, State> {
     return (
       <div>
         {form}
-        <div>{this.state.message}</div>
+        <div>
+          {this.state.message ||
+            (this.props.authContext
+              ? `Welcome, ${this.props.authContext.email}`
+              : null)}
+        </div>
       </div>
     );
   }

@@ -6,9 +6,11 @@ import ImagePreview from "./ImagePreview";
 import ImageFrame from "./ImageFrame";
 import FileSize from "./FileSize";
 import guid from "./guid";
+import { type AuthContext } from "./api";
 
 type Props = {|
   api: string,
+  authContext: AuthContext,
   edit: File => void,
 |};
 
@@ -34,15 +36,12 @@ export default class MultiUploader extends React.Component<Props, State> {
         filename: file.name,
         file_type: file.type,
       };
-      const header = localStorage.getItem("header");
-      const token = localStorage.getItem("token");
-      if (!header || !token) {
-        reject(new Error("Not signed in, missing token or header"));
-        return;
-      }
       const xhr = new XMLHttpRequest();
       xhr.open("POST", `${api}/api/upload`);
-      xhr.setRequestHeader(header, token);
+      xhr.setRequestHeader(
+        this.props.authContext.header,
+        this.props.authContext.token,
+      );
       xhr.withCredentials = true;
       xhr.setRequestHeader("Content-type", "application/json");
       xhr.onreadystatechange = () => {
