@@ -2,34 +2,59 @@
 
 import * as React from "react";
 import App from "./App";
+import type { Route } from "./routes";
+import { RouteProvider } from "./RouteContext";
 
 type Manifest = {|
   +styles: string[],
   +scripts: string[],
   +api: string,
+  +route: Route,
 |};
 
-export default (manifest: Manifest) => (
-  <React.Fragment>
-    <head lang="en">
-      <meta charSet="utf-8" />
-      <title>title</title>
-      {manifest.styles.map(style => (
-        <link href={style} rel="stylesheet" key={style} />
-      ))}
-    </head>
-    <body lang="en">
-      <App api={manifest.api} />
-      {/* eslint-disable react/no-danger */}
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `MANIFEST=${JSON.stringify(manifest)};`,
-        }}
-      />
-      {/* eslint-enable react/no-danger */}
-      {manifest.scripts.map(script => (
-        <script src={script} key={script} async />
-      ))}
-    </body>
-  </React.Fragment>
-);
+type State = {|
+  route: Route,
+|};
+
+export default class Page extends React.Component<Manifest, State> {
+  constructor(props: Manifest) {
+    super(props);
+    this.state = { route: props.route };
+  }
+
+  render() {
+    return (
+      <React.Fragment>
+        <head lang="en">
+          <meta charSet="utf-8" />
+          <title>Photothing</title>
+          {this.props.styles.map(style => (
+            <link href={style} rel="stylesheet" key={style} />
+          ))}
+        </head>
+        <body lang="en">
+          <RouteProvider
+            value={{
+              route: this.state.route,
+              navigate: route => {
+                this.setState({ route });
+              },
+            }}
+          >
+            <App api={this.props.api} />
+          </RouteProvider>
+          {/* eslint-disable react/no-danger */}
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `MANIFEST=${JSON.stringify(this.props)};`,
+            }}
+          />
+          {/* eslint-enable react/no-danger */}
+          {this.props.scripts.map(script => (
+            <script src={script} key={script} async />
+          ))}
+        </body>
+      </React.Fragment>
+    );
+  }
+}

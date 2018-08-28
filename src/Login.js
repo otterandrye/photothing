@@ -2,7 +2,12 @@
 /* eslint-disable no-restricted-globals */
 
 import * as React from "react";
-import { type AuthContext } from "./api";
+
+type AuthContext = {|
+  email: string,
+  header: string,
+  token: string,
+|};
 
 type Props = {|
   api: string,

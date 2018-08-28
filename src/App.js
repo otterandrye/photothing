@@ -6,7 +6,13 @@ import EditorPreview from "./EditorPreview";
 import Login from "./Login";
 import MultiUploader from "./MultiUploader";
 import PhotoList from "./PhotoList";
-import type { AuthContext } from "./api";
+import { ApiProvider } from "./Api";
+
+type AuthContext = {|
+  email: string,
+  header: string,
+  token: string,
+|};
 
 type State = {|
   selected: File | null,
@@ -14,7 +20,7 @@ type State = {|
 |};
 
 type Props = {|
-  api: string,
+  +api: string,
 |};
 
 export default class App extends React.Component<Props, State> {
@@ -54,7 +60,16 @@ export default class App extends React.Component<Props, State> {
 
   render() {
     return (
-      <React.Fragment>
+      <ApiProvider
+        value={{
+          host: this.props.api,
+          headers: this.state.auth
+            ? {
+                [this.state.auth.header]: this.state.auth.token,
+              }
+            : {},
+        }}
+      >
         <Login
           api={this.props.api}
           authContext={this.state.auth}
@@ -71,15 +86,11 @@ export default class App extends React.Component<Props, State> {
                 scale={1}
               />
             )}
-            <MultiUploader
-              api={this.props.api}
-              authContext={this.state.auth}
-              edit={file => this.setState({ selected: file })}
-            />
-            <PhotoList api={this.props.api} authContext={this.state.auth} />
+            <MultiUploader edit={file => this.setState({ selected: file })} />
+            <PhotoList />
           </React.Fragment>
         )}
-      </React.Fragment>
+      </ApiProvider>
     );
   }
 }

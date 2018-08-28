@@ -5,6 +5,7 @@ import * as React from "react";
 import ReactDomServer from "react-dom/server";
 
 import Page from "./Page";
+import { parseRoute } from "./routes";
 
 const port = process.env.PORT || 3000;
 const server = express();
@@ -29,6 +30,7 @@ const renderReact = (req, res) => {
       scripts={["static/client.js"]}
       styles={["static/main.css"]}
       api={API_SERVER}
+      route={parseRoute(req.path)}
     />,
   );
   stream.pipe(

@@ -6,11 +6,11 @@ import ImagePreview from "./ImagePreview";
 import ImageFrame from "./ImageFrame";
 import FileSize from "./FileSize";
 import guid from "./guid";
-import { type AuthContext } from "./api";
+import { ApiConsumer } from "./Api";
 
 type Props = {|
   api: string,
-  authContext: AuthContext,
+  headers: { [string]: string },
   edit: File => void,
 |};
 
@@ -27,36 +27,21 @@ type State = {|
 
 const formatter = new Intl.NumberFormat(undefined, { style: "percent" });
 
-export default class MultiUploader extends React.Component<Props, State> {
+class MultiUploader extends React.Component<Props, State> {
   state: State = { uploads: {} };
 
-  getSignedRequest = (api: string, file: File) =>
-    new Promise((resolve, reject) => {
-      const uploadRequest = {
+  getSignedRequest = (api: string, headers: { [string]: string }, file: File) =>
+    fetch(`${api}/api/upload`, {
+      method: "POST",
+      headers,
+      // $FlowFixMe: TODO: How do we post JSON via fetch?
+      body: {
         filename: file.name,
         file_type: file.type,
-      };
-      const xhr = new XMLHttpRequest();
-      xhr.open("POST", `${api}/api/upload`);
-      xhr.setRequestHeader(
-        this.props.authContext.header,
-        this.props.authContext.token,
-      );
-      xhr.withCredentials = true;
-      xhr.setRequestHeader("Content-type", "application/json");
-      xhr.onreadystatechange = () => {
-        if (xhr.readyState === 4) {
-          if (xhr.status === 200) {
-            const pendingUpload = JSON.parse(xhr.responseText);
-            const uploadResponse = pendingUpload.upload;
-            resolve(uploadResponse.url);
-          } else {
-            reject(new Error(`Could not get signed URL: ${xhr.status}`));
-          }
-        }
-      };
-      xhr.send(JSON.stringify(uploadRequest));
-    });
+      },
+    })
+      .then(res => res.json())
+      .then(pendingUpload => pendingUpload.upload.url);
 
   drop = (evt: SyntheticDragEvent<HTMLDivElement>) => {
     evt.stopPropagation();
@@ -115,7 +100,7 @@ export default class MultiUploader extends React.Component<Props, State> {
 
     mark("IN_PROGRESS", 0);
 
-    this.getSignedRequest(this.props.api, upload.file).then(
+    this.getSignedRequest(this.props.api, this.props.headers, upload.file).then(
       signedRequest => {
         const xhr = new XMLHttpRequest();
         xhr.upload.addEventListener(
@@ -208,3 +193,15 @@ export default class MultiUploader extends React.Component<Props, State> {
     );
   }
 }
+
+type OuterProps = {|
+  edit: File => void,
+|};
+
+export default ({ edit }: OuterProps) => (
+  <ApiConsumer>
+    {({ host, headers }) => (
+      <MultiUploader edit={edit} api={host} headers={headers} />
+    )}
+  </ApiConsumer>
+);

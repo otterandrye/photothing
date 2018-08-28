@@ -1,36 +1,19 @@
 // @flow
 
 import * as React from "react";
-import type { AuthContext } from "./api";
+import Api from "./Api";
 
-type Props = {|
-  +api: string,
-  +authContext: AuthContext,
-|};
+// photos: Array<{ uuid: string, url: string }>,
 
-type State = {|
-  photos: Array<{ uuid: string, url: string }>,
-|};
-
-export default class PhotoList extends React.Component<Props, State> {
-  state = {
-    photos: [],
-  };
-
-  componentDidMount() {
-    fetch(`${this.props.api}/api/photos`, {
-      headers: {
-        [this.props.authContext.header]: this.props.authContext.token,
-      },
-    })
-      .then(res => res.json())
-      .then(res => {
-        this.setState({ photos: res.items });
-      });
-  }
-  render() {
-    return this.state.photos.map(photo => (
-      <img src={photo.url} alt={photo.uuid} />
-    ));
-  }
-}
+export default () => (
+  <Api path="/api/photos">
+    {({ data }) => {
+      if (data && data.items && Array.isArray(data.items)) {
+        return data.items.map(photo => (
+          <img src={photo.url} alt={photo.uuid} width="250" key={photo.uuid} />
+        ));
+      }
+      return null;
+    }}
+  </Api>
+);
