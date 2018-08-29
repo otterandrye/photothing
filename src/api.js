@@ -14,13 +14,13 @@ const { Provider, Consumer } = React.createContext(
 export const ApiProvider = Provider;
 export const ApiConsumer = Consumer;
 
-type Props = {|
+type Props<T> = {|
   +method: IdempotentHttpVerb,
   +path: string,
-  +children: RequestState => React.Node,
+  +children: (RequestState<T>) => React.Node,
 |};
 
-const Api = (props: Props) => (
+const Api = <T>(props: Props<T>) => (
   <Consumer>
     {context => (
       <Rest
@@ -36,5 +36,7 @@ const Api = (props: Props) => (
 );
 
 Api.defaultProps = { method: "GET" };
+
+export type { RequestState };
 
 export default Api;

@@ -1,14 +1,16 @@
 // @flow
 
 import * as React from "react";
-import Api from "./Api";
+import Api, { type RequestState } from "./Api";
 
-// photos: Array<{ uuid: string, url: string }>,
+type PhotosApiResponse = {|
+  +items: Array<{| +uuid: string, +url: string |}>,
+|};
 
 export default () => (
   <Api path="/api/photos">
-    {({ data }) => {
-      if (data && data.items && Array.isArray(data.items)) {
+    {({ data }: RequestState<PhotosApiResponse>) => {
+      if (data) {
         return data.items.map(photo => (
           <img src={photo.url} alt={photo.uuid} width="250" key={photo.uuid} />
         ));

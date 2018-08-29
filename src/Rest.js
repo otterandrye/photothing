@@ -4,26 +4,29 @@ import * as React from "react";
 
 export type IdempotentHttpVerb = "GET" | "PUT" | "DELETE";
 
-export type RequestState = {|
-  data: any,
+export type RequestState<T, E = string> = {|
+  data: T | null,
   loading: boolean,
-  error: any,
+  error: E | null,
 |};
 
-type Props = {|
+type Props<T> = {|
   +method: IdempotentHttpVerb,
   +host: string,
   +path: string,
   +headers: { [string]: string },
-  +children: RequestState => React.Node,
+  +children: (RequestState<T>) => React.Node,
 |};
 
-export default class Rest extends React.Component<Props, RequestState> {
+export default class Rest<T> extends React.Component<
+  Props<T>,
+  RequestState<T>,
+> {
   static defaultProps = {
     method: "GET",
   };
 
-  state = { data: null, error: null, loading: true };
+  state: RequestState<T> = { data: null, error: null, loading: true };
 
   componentDidMount() {
     fetch(`${this.props.host}${this.props.path}`, {
