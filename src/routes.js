@@ -87,5 +87,5 @@ export const getPath = (route: Route) => {
   if (route.page === "404") {
     return "/404";
   }
-  return "";
+  return "/";
 };

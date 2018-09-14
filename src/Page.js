@@ -4,6 +4,7 @@ import * as React from "react";
 import App from "./App";
 import type { Route } from "./routes";
 import { RouteProvider } from "./RouteContext";
+import History from "./History";
 
 type Manifest = {|
   +styles: string[],
@@ -37,6 +38,7 @@ export default class Page extends React.Component<Manifest, State> {
           ))}
         </head>
         <body lang="en">
+          <History route={this.state.route} />
           <RouteProvider
             value={{
               route: this.state.route,
