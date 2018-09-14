@@ -22,6 +22,10 @@ export default class Page extends React.Component<Manifest, State> {
     this.state = { route: props.route };
   }
 
+  navigate = (route: Route) => {
+    this.setState({ route });
+  };
+
   render() {
     return (
       <React.Fragment>
@@ -36,12 +40,14 @@ export default class Page extends React.Component<Manifest, State> {
           <RouteProvider
             value={{
               route: this.state.route,
-              navigate: route => {
-                this.setState({ route });
-              },
+              navigate: this.navigate,
             }}
           >
-            <App api={this.props.api} />
+            <App
+              api={this.props.api}
+              navigate={this.navigate}
+              route={this.state.route}
+            />
           </RouteProvider>
           {/* eslint-disable react/no-danger */}
           <script

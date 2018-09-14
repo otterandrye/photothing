@@ -23,14 +23,17 @@ function env(key): string {
 const API_SERVER = env("API_SERVER");
 
 server.set("x-powered-by", false);
-const renderReact = (req, res) => {
+express.static.mime.define({ "application/wasm": ["wasm"] });
+server.use("/static", express.static("dist"));
+
+server.get("*", (req, res) => {
   res.write("<!doctype html><html>");
   const stream = ReactDomServer.renderToNodeStream(
     <Page
       scripts={["static/client.js"]}
       styles={["static/main.css"]}
       api={API_SERVER}
-      route={parseRoute(req.path)}
+      route={parseRoute(req.url)}
     />,
   );
   stream.pipe(
@@ -40,14 +43,7 @@ const renderReact = (req, res) => {
   stream.on("end", () => {
     res.end("</html>");
   });
-};
-
-// TODO: this is janky
-server.get("/", renderReact);
-server.get("/password_reset", renderReact);
-
-express.static.mime.define({ "application/wasm": ["wasm"] });
-server.use("/static", express.static("dist"));
+});
 
 server.listen(port, () =>
   console.log(`Photo thing listening on port ${port}!`),

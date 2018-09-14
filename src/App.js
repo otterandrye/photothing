@@ -2,11 +2,14 @@
 
 import * as React from "react";
 import "./App.css";
-import EditorPreview from "./EditorPreview";
-import Login from "./Login";
-import MultiUploader from "./MultiUploader";
-import PhotoList from "./PhotoList";
+
+import type { Route } from "./routes";
 import { ApiProvider } from "./Api";
+import Library from "./Library";
+import Login from "./auth/Login";
+import SignUp from "./auth/SignUp";
+import ForgotPassword from "./auth/ForgotPassword";
+import ResetPassword from "./auth/ResetPassword";
 
 type AuthContext = {|
   email: string,
@@ -15,19 +18,17 @@ type AuthContext = {|
 |};
 
 type State = {|
-  selected: File | null,
   auth: AuthContext | null,
 |};
 
 type Props = {|
   +api: string,
+  +navigate: Route => void,
+  +route: Route,
 |};
 
 export default class App extends React.Component<Props, State> {
   state: State = {
-    // The selected file for the editor.
-    selected: null,
-
     // The current auth context
     auth: null,
   };
@@ -43,6 +44,9 @@ export default class App extends React.Component<Props, State> {
     if (authContext.email && authContext.header && authContext.token) {
       // $FlowFixMe: not getting the refinement right, here.
       this.setState({ auth: authContext });
+    } else if (this.props.route.page === "LIBRARY") {
+      localStorage.clear();
+      this.props.navigate({ page: "LOGIN" });
     }
   }
 
@@ -51,14 +55,17 @@ export default class App extends React.Component<Props, State> {
     localStorage.setItem("token", authContext.token);
     localStorage.setItem("email", authContext.email);
     this.setState({ auth: authContext });
+    this.props.navigate({ page: "LIBRARY" });
   };
 
   logout = () => {
     localStorage.clear();
     this.setState({ auth: null });
+    this.props.navigate({ page: "LOGIN" });
   };
 
   render() {
+    const { route } = this.props;
     return (
       <ApiProvider
         value={{
@@ -70,26 +77,36 @@ export default class App extends React.Component<Props, State> {
             : {},
         }}
       >
-        <Login
-          api={this.props.api}
-          authContext={this.state.auth}
-          authenticate={this.authenticate}
-          logout={this.logout}
-        />
         {this.state.auth && (
           <React.Fragment>
-            {this.state.selected && (
-              <EditorPreview
-                input={this.state.selected}
-                height={264}
-                width={399}
-                scale={1}
-              />
-            )}
-            <MultiUploader edit={file => this.setState({ selected: file })} />
-            <PhotoList />
+            Welcome, {this.state.auth.email}.
+            <button type="button" onClick={this.logout}>
+              Log out
+            </button>
           </React.Fragment>
         )}
+        {route.page === "LOGIN" && (
+          <Login
+            api={this.props.api}
+            authenticate={this.authenticate}
+            navigate={this.props.navigate}
+          />
+        )}
+        {route.page === "SIGNUP" && (
+          <SignUp api={this.props.api} navigate={this.props.navigate} />
+        )}
+        {route.page === "FORGOT_PASSWORD" && (
+          <ForgotPassword api={this.props.api} />
+        )}
+        {route.page === "RESET_PASSWORD" && (
+          <ResetPassword
+            api={this.props.api}
+            email={route.email}
+            id={route.id}
+            navigate={this.props.navigate}
+          />
+        )}
+        {this.state.auth && route.page === "LIBRARY" && <Library />}
       </ApiProvider>
     );
   }
