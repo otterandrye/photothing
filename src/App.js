@@ -1,7 +1,7 @@
 // @flow
 
 import * as React from "react";
-import "./App.css";
+import styles from "./App.css";
 
 import type { Route } from "./routes";
 import { ApiProvider } from "./Api";
@@ -10,6 +10,8 @@ import Login from "./auth/Login";
 import SignUp from "./auth/SignUp";
 import ForgotPassword from "./auth/ForgotPassword";
 import ResetPassword from "./auth/ResetPassword";
+import Album from "./Album";
+import Menu from "./Menu";
 
 type AuthContext = {|
   email: string,
@@ -77,36 +79,42 @@ export default class App extends React.Component<Props, State> {
             : {},
         }}
       >
-        {this.state.auth && (
-          <React.Fragment>
-            Welcome, {this.state.auth.email}.
-            <button type="button" onClick={this.logout}>
-              Log out
-            </button>
-          </React.Fragment>
-        )}
-        {route.page === "LOGIN" && (
-          <Login
-            api={this.props.api}
-            authenticate={this.authenticate}
-            navigate={this.props.navigate}
-          />
-        )}
-        {route.page === "SIGNUP" && (
-          <SignUp api={this.props.api} navigate={this.props.navigate} />
-        )}
-        {route.page === "FORGOT_PASSWORD" && (
-          <ForgotPassword api={this.props.api} />
-        )}
-        {route.page === "RESET_PASSWORD" && (
-          <ResetPassword
-            api={this.props.api}
-            email={route.email}
-            id={route.id}
-            navigate={this.props.navigate}
-          />
-        )}
-        {this.state.auth && route.page === "LIBRARY" && <Library />}
+        <Menu />
+        <div className={styles.content}>
+          {this.state.auth && (
+            <React.Fragment>
+              Welcome, {this.state.auth.email}.
+              <button type="button" onClick={this.logout}>
+                Log out
+              </button>
+            </React.Fragment>
+          )}
+          {route.page === "LOGIN" && (
+            <Login
+              api={this.props.api}
+              authenticate={this.authenticate}
+              navigate={this.props.navigate}
+            />
+          )}
+          {route.page === "SIGNUP" && (
+            <SignUp api={this.props.api} navigate={this.props.navigate} />
+          )}
+          {route.page === "FORGOT_PASSWORD" && (
+            <ForgotPassword api={this.props.api} />
+          )}
+          {route.page === "RESET_PASSWORD" && (
+            <ResetPassword
+              api={this.props.api}
+              email={route.email}
+              id={route.id}
+              navigate={this.props.navigate}
+            />
+          )}
+          {this.state.auth && route.page === "LIBRARY" && <Library />}
+          {route.page === "ALBUM" && (
+            <Album id={route.albumId} photoId={route.photoId} />
+          )}
+        </div>
       </ApiProvider>
     );
   }

@@ -26,12 +26,19 @@ type NotFound = {|
   page: "404",
 |};
 
+type Album = {|
+  page: "ALBUM",
+  albumId: string,
+  photoId: string | null,
+|};
+
 export type Route =
   | Login
   | Library
   | ResetPassword
   | ForgotPassword
   | SignUp
+  | Album
   | NotFound;
 
 export const parseRoute = (path: string): Route => {
@@ -64,6 +71,13 @@ export const parseRoute = (path: string): Route => {
       page: "404",
     };
   }
+  if (root === "/album") {
+    return {
+      page: "ALBUM",
+      albumId: params.get("id"),
+      photoId: params.get("photoId") || null,
+    };
+  }
   return {
     page: "LIBRARY",
   };
@@ -86,6 +100,11 @@ export const getPath = (route: Route) => {
   }
   if (route.page === "404") {
     return "/404";
+  }
+  if (route.page === "ALBUM") {
+    return `/album?id=${route.albumId}${
+      route.photoId ? `&photoId=${route.photoId}` : ""
+    }`;
   }
   return "/";
 };

@@ -1,0 +1,24 @@
+.indicator {
+  background-color: #4062bb;
+  color: #4062bb;
+
+  width: 4px;
+  margin: 8px;
+  border-radius: 2px;
+  line-height: 1.5rem;
+  overflow: hidden;
+  text-align: center;
+
+  transition: flex 1s, padding 1s, color 1s;
+}
+
+.indicator.revealed {
+  padding: 0 4px;
+  color: #b3b3b3;
+  flex: 1;
+}
+
+.label {
+  flex-grow: 2;
+  margin-right: 8px;
+}

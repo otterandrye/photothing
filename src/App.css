@@ -1,4 +1,57 @@
+* {
+  box-sizing: border-box;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
     Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  display: flex;
+  background-color: #7b7b7b;
 }
+
+.content {
+  flex-grow: 1;
+  padding: 1rem;
+}
+
+/*
+
+Blacks:
+
+ec
+d9
+c6
+b3 [ui copy]
+a0
+8e
+7b
+68
+55
+42
+#30
+2c
+28
+23
+1f
+
+Red:
+
+ed5e34
+#EC4E20
+d7471e
+
+Blue:
+
+627Ec7
+5170C1
+#4062BB
+3b5aaa
+35519a
+
+Yellow: #D7CF07
+Purple: #9E788F
+
+*/
