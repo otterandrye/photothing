@@ -1,6 +1,7 @@
 // @flow
 
 import * as React from "react";
+import { connect } from "react-redux";
 
 type Props = {|
   +api: string,
@@ -12,7 +13,7 @@ type State = {|
   message: string,
 |};
 
-export default class ForgotPassword extends React.Component<Props, State> {
+class ForgotPassword extends React.Component<Props, State> {
   state: State = { email: "", success: false, message: "Enter your email" };
 
   setEmail = (evt: SyntheticInputEvent<*>) =>
@@ -63,3 +64,5 @@ export default class ForgotPassword extends React.Component<Props, State> {
     );
   }
 }
+
+export default connect(state => ({ api: state.api.host }))(ForgotPassword);

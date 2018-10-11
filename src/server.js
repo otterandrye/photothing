@@ -32,8 +32,14 @@ server.get("*", (req, res) => {
     <Page
       scripts={["static/client.js"]}
       styles={["static/main.css"]}
-      api={API_SERVER}
-      route={parseRoute(req.url)}
+      state={{
+        api: {
+          host: API_SERVER,
+          headers: {},
+        },
+        auth: null,
+        route: parseRoute(req.url),
+      }}
     />,
   );
   stream.pipe(

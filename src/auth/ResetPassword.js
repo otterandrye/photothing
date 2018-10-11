@@ -1,6 +1,9 @@
 // @flow
 
 import * as React from "react";
+import { connect } from "react-redux";
+
+import { navigate } from "../State";
 import type { Route } from "../routes";
 
 type Props = {|
@@ -16,7 +19,7 @@ type State = {|
   message: string,
 |};
 
-export default class ResetPassword extends React.Component<Props, State> {
+class ResetPassword extends React.Component<Props, State> {
   state: State = {
     password: "",
     success: false,
@@ -81,3 +84,8 @@ export default class ResetPassword extends React.Component<Props, State> {
     );
   }
 }
+
+export default connect(
+  state => ({ api: state.api.host }),
+  { navigate },
+)(ResetPassword);

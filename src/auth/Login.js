@@ -1,17 +1,14 @@
 // @flow
 
 import * as React from "react";
-import type { Route } from "../routes";
+import { connect } from "react-redux";
 
-type AuthContext = {|
-  email: string,
-  header: string,
-  token: string,
-|};
+import { authenticate, navigate, type Auth } from "../State";
+import type { Route } from "../routes";
 
 type Props = {|
   +api: string,
-  +authenticate: AuthContext => void,
+  +authenticate: Auth => void,
   +navigate: Route => void,
 |};
 
@@ -21,7 +18,7 @@ type State = {|
   message: string,
 |};
 
-export default class Login extends React.Component<Props, State> {
+class Login extends React.Component<Props, State> {
   state: State = { email: "", password: "", message: "Please Login" };
 
   setEmail = (evt: SyntheticInputEvent<*>) =>
@@ -92,3 +89,8 @@ export default class Login extends React.Component<Props, State> {
     );
   }
 }
+
+export default connect(
+  state => ({ api: state.api.host }),
+  { authenticate, navigate },
+)(Login);

@@ -1,6 +1,8 @@
 // @flow
 
 import * as React from "react";
+import { connect } from "react-redux";
+import { logout as logoutAction } from "./State";
 import styles from "./Menu.css";
 import Action from "./Action";
 
@@ -17,7 +19,12 @@ const uploadAction = () => {
   alert("Upload!");
 };
 
-const Menu = () => (
+type Props = {|
+  +email: string,
+  +logout: () => void,
+|};
+
+const Menu = ({ email, logout }: Props) => (
   <div className={styles.menuSizing}>
     <div className={`${styles.menu} ${styles.menuSizing}`}>
       <div>
@@ -43,10 +50,18 @@ const Menu = () => (
         </ul>
       </div>
       <div>
-        <div className={styles.user}>marcusdarmstrong@gmail.com</div>
+        <div className={styles.user}>{email}</div>
+        <div onClick={logout} className={styles.logout}>
+          Not you?
+        </div>
       </div>
     </div>
   </div>
 );
 
-export default Menu;
+export default connect(
+  state => ({
+    email: state.auth.email,
+  }),
+  { logout: logoutAction },
+)(Menu);

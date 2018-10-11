@@ -1,12 +1,13 @@
 // @flow
 
 import * as React from "react";
+import { connect } from "react-redux";
+
 import css from "./MultiUploader.css";
 import ImagePreview from "./ImagePreview";
 import ImageFrame from "./ImageFrame";
 import FileSize from "./FileSize";
 import guid from "./guid";
-import { ApiConsumer } from "./Api";
 
 type Props = {|
   api: string,
@@ -194,14 +195,6 @@ class MultiUploader extends React.Component<Props, State> {
   }
 }
 
-type OuterProps = {|
-  edit: File => void,
-|};
-
-export default ({ edit }: OuterProps) => (
-  <ApiConsumer>
-    {({ host, headers }) => (
-      <MultiUploader edit={edit} api={host} headers={headers} />
-    )}
-  </ApiConsumer>
+export default connect(({ api }) => ({ api: api.host, headers: api.headers }))(
+  MultiUploader,
 );

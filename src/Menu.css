@@ -73,3 +73,13 @@
   display: block;
   margin: -4px 0 8px 20px;
 }
+
+.logout {
+  text-decoration: underline;
+  font-size: 0.667rem;
+  cursor: pointer;
+}
+
+.logout:hover {
+  color: #d9d9d9;
+}

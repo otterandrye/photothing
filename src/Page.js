@@ -1,68 +1,55 @@
 // @flow
 
 import * as React from "react";
+import { Provider } from "react-redux";
+import { createStore, type Store } from "redux";
 import App from "./App";
-import type { Route } from "./routes";
-import { RouteProvider } from "./RouteContext";
 import History from "./History";
+import Authenticator from "./Authenticator";
+import { reducer, type State, type Action } from "./State";
 
 type Manifest = {|
   +styles: string[],
   +scripts: string[],
-  +api: string,
-  +route: Route,
+  +state: State,
 |};
 
-type State = {|
-  route: Route,
-|};
-
-export default class Page extends React.Component<Manifest, State> {
+export default class Page extends React.Component<Manifest> {
   constructor(props: Manifest) {
     super(props);
-    this.state = { route: props.route };
+    this.store = createStore(reducer, props.state);
   }
 
-  navigate = (route: Route) => {
-    this.setState({ route });
-  };
+  store: Store<State, Action>;
 
   render() {
     return (
-      <React.Fragment>
-        <head lang="en">
-          <meta charSet="utf-8" />
-          <title>Photothing</title>
-          {this.props.styles.map(style => (
-            <link href={style} rel="stylesheet" key={style} />
-          ))}
-        </head>
-        <body lang="en">
-          <History route={this.state.route} />
-          <RouteProvider
-            value={{
-              route: this.state.route,
-              navigate: this.navigate,
-            }}
-          >
-            <App
-              api={this.props.api}
-              navigate={this.navigate}
-              route={this.state.route}
+      <Provider store={this.store}>
+        <React.Fragment>
+          <head lang="en">
+            <meta charSet="utf-8" />
+            <title>Photothing</title>
+            {this.props.styles.map(style => (
+              <link href={style} rel="stylesheet" key={style} />
+            ))}
+          </head>
+          <body lang="en">
+            <History />
+            <Authenticator />
+            <App />
+            {/* eslint-disable react/no-danger */}
+            <script
+              dangerouslySetInnerHTML={{
+                __html: `MANIFEST=${JSON.stringify(this.props)};`,
+              }}
             />
-          </RouteProvider>
-          {/* eslint-disable react/no-danger */}
-          <script
-            dangerouslySetInnerHTML={{
-              __html: `MANIFEST=${JSON.stringify(this.props)};`,
-            }}
-          />
-          {/* eslint-enable react/no-danger */}
-          {this.props.scripts.map(script => (
-            <script src={script} key={script} async />
-          ))}
-        </body>
-      </React.Fragment>
+            {/* eslint-enable react/no-danger */}
+            {this.props.scripts.map(script => (
+              <script src={script} key={script} async />
+            ))}
+          </body>
+        </React.Fragment>
+      </Provider>
     );
   }
 }

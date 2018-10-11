@@ -1,13 +1,14 @@
 // @flow
 
 import * as React from "react";
+import { connect } from "react-redux";
 import { getPath, type Route } from "./routes";
 
 type Props = {|
   route: Route,
 |};
 
-export default class History extends React.Component<Props> {
+class History extends React.Component<Props> {
   componentDidMount() {
     // eslint-disable-next-line no-restricted-globals
     history.replaceState(this.props.route, "", getPath(this.props.route));
@@ -25,3 +26,5 @@ export default class History extends React.Component<Props> {
     return null;
   }
 }
+
+export default connect(state => ({ route: state.route }))(History);

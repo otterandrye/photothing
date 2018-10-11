@@ -1,6 +1,9 @@
 // @flow
 
 import * as React from "react";
+import { connect } from "react-redux";
+
+import { navigate } from "../State";
 import type { Route } from "../routes";
 
 type Props = {|
@@ -15,7 +18,7 @@ type State = {|
   success: boolean,
 |};
 
-export default class SignUp extends React.Component<Props, State> {
+class SignUp extends React.Component<Props, State> {
   state: State = {
     email: "",
     password: "",
@@ -95,3 +98,8 @@ export default class SignUp extends React.Component<Props, State> {
     );
   }
 }
+
+export default connect(
+  state => ({ api: state.api.host }),
+  { navigate },
+)(SignUp);
