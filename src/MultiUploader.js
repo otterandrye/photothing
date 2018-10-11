@@ -146,7 +146,7 @@ class MultiUploader extends React.Component<Props, State> {
               className={css.hidden}
               type="file"
               multiple
-              accept="image/*"
+              accept="image/jpeg, image/dng"
               onChange={this.handler}
             />
           </label>

@@ -9,7 +9,7 @@
   overflow: hidden;
   text-align: center;
 
-  transition: flex 0.3s, padding 0.3s, color 0.3s;
+  transition: flex 0.2s, padding 0.2s, color 0.2s;
 }
 
 .indicator.revealed {
