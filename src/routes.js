@@ -18,6 +18,10 @@ type Library = {|
   page: "LIBRARY",
 |};
 
+type Albums = {|
+  page: "ALBUMS",
+|};
+
 type SignUp = {|
   page: "SIGNUP",
 |};
@@ -39,6 +43,7 @@ export type Route =
   | ForgotPassword
   | SignUp
   | Album
+  | Albums
   | NotFound;
 
 export const parseRoute = (path: string): Route => {
@@ -78,6 +83,11 @@ export const parseRoute = (path: string): Route => {
       photoId: params.get("photoId") || null,
     };
   }
+  if (root === "/albums") {
+    return {
+      page: "ALBUMS",
+    };
+  }
   return {
     page: "LIBRARY",
   };
@@ -105,6 +115,9 @@ export const getPath = (route: Route) => {
     return `/album?id=${route.albumId}${
       route.photoId ? `&photoId=${route.photoId}` : ""
     }`;
+  }
+  if (route.page === "ALBUMS") {
+    return "/albums";
   }
   return "/";
 };
