@@ -20,6 +20,8 @@ class Authenticator extends React.Component<Props> {
     if (authContext.email && authContext.header && authContext.token) {
       // $FlowFixMe: Flow can't handle this refinement
       this.props.authenticate(authContext);
+    } else {
+      this.props.logout();
     }
   }
 
