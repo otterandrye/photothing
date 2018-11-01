@@ -2,20 +2,26 @@
 
 import * as React from "react";
 import { connect } from "react-redux";
-import { logout as logoutAction, navigate as navigationAction } from "./State";
+import {
+  logout as logoutAction,
+  navigate as navigationAction,
+  pushModal as pushModalAction,
+} from "./State";
 import { type Route } from "./routes";
 import styles from "./Menu.css";
 import Action from "./Action";
 import FilePicker from "./FilePicker";
+import Uploader from "./Uploader";
 
 type Props = {|
   +page: string,
   +email: string,
   +logout: () => void,
   +navigate: Route => void,
+  +pushModal: React.Node => void,
 |};
 
-const Menu = ({ page, email, logout, navigate }: Props) => {
+const Menu = ({ page, email, logout, navigate, pushModal }: Props) => {
   const libraryAction = () => {
     if (page !== "LIBRARY") {
       navigate({ page: "LIBRARY" });
@@ -53,7 +59,9 @@ const Menu = ({ page, email, logout, navigate }: Props) => {
             </li>
             <FilePicker
               accept={["image/jpeg", "image/x-adobe-dng"]}
-              onSelect={() => {}}
+              onSelect={files => {
+                pushModal(<Uploader files={files} />);
+              }}
             >
               {open => (
                 <li onClick={open}>
@@ -82,5 +90,9 @@ export default connect(
     page: state.route.page,
     email: state.auth.email,
   }),
-  { logout: logoutAction, navigate: navigationAction },
+  {
+    logout: logoutAction,
+    navigate: navigationAction,
+    pushModal: pushModalAction,
+  },
 )(Menu);

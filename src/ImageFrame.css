@@ -1,9 +1,10 @@
 .frame {
-  width: 10em;
-  height: 10em;
-  line-height: 10em;
+  min-width: 10rem;
+  height: 10rem;
+  line-height: 10rem;
   background-color: black;
   text-align: center;
+  margin: 0.5rem;
 }
 
 .frame img {

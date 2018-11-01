@@ -12,6 +12,7 @@ import ForgotPassword from "./auth/ForgotPassword";
 import ResetPassword from "./auth/ResetPassword";
 import Album from "./Album";
 import Menu from "./Menu";
+import Modals from "./Modals";
 
 type Props = {|
   route: Route,
@@ -37,6 +38,7 @@ const App = ({ route, isAuthenticated }: Props) => (
     {route.page === "ALBUM" && (
       <Album id={route.albumId} photoId={route.photoId} />
     )}
+    <Modals />
   </React.Fragment>
 );
 

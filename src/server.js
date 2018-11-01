@@ -39,6 +39,7 @@ server.get("*", (req, res) => {
         },
         auth: null,
         route: parseRoute(req.url),
+        modals: [],
       }}
     />,
   );

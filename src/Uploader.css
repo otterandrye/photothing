@@ -1,0 +1,16 @@
+.preview {
+  display: flex;
+  background-color: black;
+  overflow-x: scroll;
+}
+
+.action {
+  display: flex;
+  line-height: 2.5rem;
+  color: #b3b3b3;
+}
+
+.pane {
+  display: flex;
+  justify-content: space-between;
+}

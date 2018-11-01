@@ -6,6 +6,8 @@ import css from "./ImagePreview.css";
 
 type Props = {
   file: File,
+  selected: boolean,
+  onClick: () => void,
 };
 
 type State = {
@@ -19,6 +21,11 @@ const isWebSafeImage = (type: string) =>
   type === "image/svg+xml";
 
 export default class ImagePreview extends React.Component<Props, State> {
+  static defaultProps = {
+    selected: false,
+    onClick: () => {},
+  };
+
   state: State = { dataUrl: null };
 
   componentDidMount() {
@@ -33,7 +40,14 @@ export default class ImagePreview extends React.Component<Props, State> {
     const { dataUrl } = this.state;
     if (dataUrl !== null) {
       return (
-        <img src={dataUrl} alt={this.props.file.name} className={css.preview} />
+        <img
+          src={dataUrl}
+          alt={this.props.file.name}
+          className={`${css.preview}${
+            this.props.selected ? ` ${css.selected}` : ""
+          }`}
+          onClick={this.props.onClick}
+        />
       );
     }
     if (isWebSafeImage(this.props.file.type)) {

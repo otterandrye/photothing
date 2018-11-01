@@ -9,6 +9,17 @@ type Props = {|
   do: () => void,
 |};
 
+const translate = key => {
+  switch (key) {
+    case "ArrowRight":
+      return "\u2192";
+    case "ArrowLeft":
+      return "\u2190";
+    default:
+      return key;
+  }
+};
+
 class Action extends React.Component<Props, {| highlight: boolean |}> {
   state = { highlight: false };
 
@@ -49,11 +60,11 @@ class Action extends React.Component<Props, {| highlight: boolean |}> {
           className={`${styles.indicator}${
             this.state.highlight ? ` ${styles.revealed}` : ""
           }`}
-          alt={`This action can be triggered with the key command: ${
-            this.props.keybinding
-          }`}
+          alt={`This action can be triggered with the key command: ${translate(
+            this.props.keybinding,
+          )}`}
         >
-          {this.props.keybinding}
+          {translate(this.props.keybinding)}
         </span>
         <span className={styles.label}>{this.props.label}</span>
       </React.Fragment>
