@@ -10,6 +10,20 @@ import { parseRoute } from "./routes";
 const port = process.env.PORT || 3000;
 const server = express();
 
+// heroku handles ssl termination, check headers for the original scheme
+if (process.env.NODE_ENV === "production") {
+  server.use((req, res, next) => {
+    res.setHeader(
+      "Strict-Transport-Security",
+      "max-age=8640000; includeSubDomains",
+    );
+    if (req.headers["x-forwarded-proto"] !== "https") {
+      return res.redirect(301, `https://${req.hostname}${req.url}`);
+    }
+    return next();
+  });
+}
+
 function env(key): string {
   const value = process.env[key];
   if (typeof value !== "string") {
