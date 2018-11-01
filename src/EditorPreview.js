@@ -50,7 +50,11 @@ export default class EditorPreview extends React.Component<Props> {
   getVPixelHeight = () => 4224; // Math.ceil(this.props.height * this.props.scale);
   getVPixelWidth = () => 6384; // Math.ceil(this.props.width * this.props.scale);
   getVPixelCount = () => this.getVPixelHeight() * this.getVPixelWidth();
-  draw = (ctx: CanvasRenderingContext2D, memory, pixels) => {
+  draw = (
+    ctx: CanvasRenderingContext2D,
+    memory: { buffer: ArrayBuffer },
+    pixels: number,
+  ) => {
     const imageData = new ImageData(
       new Uint8ClampedArray(memory.buffer, pixels, this.getVPixelCount() * 4),
       this.getVPixelWidth(),

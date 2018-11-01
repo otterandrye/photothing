@@ -67,7 +67,9 @@ export const parseRoute = (path: string): Route => {
   if (root === "/password_reset") {
     return {
       page: "RESET_PASSWORD",
+      // $FlowFixMe: Flow can't tell that this is required.
       id: params.get("id"),
+      // $FlowFixMe: Flow can't tell that this is required.
       email: params.get("email"),
     };
   }
@@ -79,6 +81,7 @@ export const parseRoute = (path: string): Route => {
   if (root === "/album") {
     return {
       page: "ALBUM",
+      // $FlowFixMe: Flow can't tell that this is required.
       albumId: params.get("id"),
       photoId: params.get("photoId") || null,
     };

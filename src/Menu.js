@@ -6,11 +6,7 @@ import { logout as logoutAction, navigate as navigationAction } from "./State";
 import { type Route } from "./routes";
 import styles from "./Menu.css";
 import Action from "./Action";
-
-const uploadAction = () => {
-  // eslint-disable-next-line no-alert
-  alert("Upload!");
-};
+import FilePicker from "./FilePicker";
 
 type Props = {|
   +page: string,
@@ -36,7 +32,7 @@ const Menu = ({ page, email, logout, navigate }: Props) => {
         <div>
           <div className={styles.logoBlock}>
             <div className={styles.logo}>{"\u23e3"}</div>
-            <div className={styles.brand}>Photothing</div>
+            <div className={styles.brand}>Chroma</div>
           </div>
           <ul className={styles.nav}>
             <li
@@ -55,12 +51,19 @@ const Menu = ({ page, email, logout, navigate }: Props) => {
               <Action label="Albums" keybinding="a" do={albumsAction} />
               <span className={styles.description}>Show off your work</span>
             </li>
-            <li onClick={uploadAction}>
-              <Action label="Upload" keybinding="u" do={uploadAction} />
-              <span className={styles.description}>
-                Or just drag-n-drop anywhere
-              </span>
-            </li>
+            <FilePicker
+              accept={["image/jpeg", "image/x-adobe-dng"]}
+              onSelect={() => {}}
+            >
+              {open => (
+                <li onClick={open}>
+                  <Action label="Upload" keybinding="u" do={open} />
+                  <span className={styles.description}>
+                    Or just drag-n-drop anywhere
+                  </span>
+                </li>
+              )}
+            </FilePicker>
           </ul>
         </div>
         <div>

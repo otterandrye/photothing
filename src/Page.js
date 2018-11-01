@@ -28,7 +28,7 @@ export default class Page extends React.Component<Manifest> {
         <React.Fragment>
           <head lang="en">
             <meta charSet="utf-8" />
-            <title>Photothing</title>
+            <title>Chroma</title>
             {this.props.styles.map(style => (
               <link href={style} rel="stylesheet" key={style} />
             ))}
