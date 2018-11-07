@@ -67,9 +67,10 @@ export default class Uploader extends React.Component<
             />
           </div>
         </div>
-        <div>
-          {this.props.files.length > 0 &&
-            this.props.files[this.state.selected].name}
+        <div className={styles.previewFrame}>
+          {this.props.files.length > 0 && (
+            <ImagePreview file={this.props.files[this.state.selected]} />
+          )}
         </div>
       </React.Fragment>
     );

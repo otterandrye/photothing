@@ -1,4 +1,5 @@
 .preview {
+  flex: 0 0 auto;
   display: flex;
   background-color: black;
   overflow-x: scroll;
@@ -11,6 +12,13 @@
 }
 
 .pane {
+  flex: 0 0 auto;
   display: flex;
   justify-content: space-between;
+}
+
+.previewFrame {
+  overflow: hidden;
+  text-align: center;
+  padding: 1rem;
 }

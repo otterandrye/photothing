@@ -1,16 +1,10 @@
 .shade {
   position: fixed;
-
   top: 0;
-
   left: 0;
-
   background-color: black;
-
   right: 0;
-
   bottom: 0;
-
   opacity: 0.75;
 }
 .modal {
@@ -21,4 +15,6 @@
   bottom: 3rem;
   background-color: #303030;
   border-radius: 2px;
+  display: flex;
+  flex-direction: column;
 }
