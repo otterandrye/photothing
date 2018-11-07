@@ -46,14 +46,12 @@ export default class Uploader extends React.Component<
       <React.Fragment>
         <div className={styles.preview}>
           {files.map((file, idx) => (
-            <ImageFrame>
-              <ImagePreview
-                file={file}
-                onClick={
-                  idx !== this.state.selected ? this.select(idx) : () => {}
-                }
-                selected={idx === this.state.selected}
-              />
+            <ImageFrame key={file.name}>
+              {idx === this.state.selected ? (
+                <ImagePreview file={file} selected />
+              ) : (
+                <ImagePreview file={file} onClick={this.select(idx)} />
+              )}
             </ImageFrame>
           ))}
         </div>

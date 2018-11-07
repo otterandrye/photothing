@@ -3,4 +3,7 @@
 import * as React from "react";
 import css from "./Loader.css";
 
-export default () => <div className={css.loader} />;
+// $FlowFixMe: https://github.com/facebook/flow/issues/6103
+export default React.forwardRef((_, ref) => (
+  <div className={css.loader} ref={ref} />
+));

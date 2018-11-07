@@ -7,11 +7,7 @@ import css from "./ImagePreview.css";
 type Props = {
   file: File,
   selected: boolean,
-  onClick: () => void,
-};
-
-type State = {
-  dataUrl: null | string,
+  onClick?: () => void,
 };
 
 const isWebSafeImage = (type: string) =>
@@ -20,39 +16,56 @@ const isWebSafeImage = (type: string) =>
   type === "image/gif" ||
   type === "image/svg+xml";
 
-export default class ImagePreview extends React.Component<Props, State> {
-  static defaultProps = {
-    selected: false,
-    onClick: () => {},
-  };
+const ImagePreview = ({ file, selected, onClick }: Props) => {
+  // $FlowFixMe: This is an experimental API.
+  const [dataUrl, setDataUrl] = React.useState(null);
 
-  state: State = { dataUrl: null };
+  // $FlowFixMe: This is an experimental API.
+  const ref = React.useRef();
 
-  componentDidMount() {
-    if (isWebSafeImage(this.props.file.type)) {
+  // $FlowFixMe: This is an experimental API.
+  React.useMutationEffect(() => {
+    if (selected && ref.current) {
+      ref.current.scrollIntoView();
+    }
+  });
+
+  // $FlowFixMe: This is an experimental API.
+  React.useEffect(
+    () => {
       const reader = new FileReader();
-      reader.onload = evt => this.setState({ dataUrl: evt.target.result });
-      reader.readAsDataURL(this.props.file);
-    }
+      reader.onload = evt => setDataUrl(evt.target.result);
+      reader.readAsDataURL(file);
+    },
+    [file],
+  );
+
+  if (dataUrl !== null) {
+    return (
+      <img
+        src={dataUrl}
+        alt={file.name}
+        className={`${css.preview}${selected ? ` ${css.selected}` : ""}`}
+        onClick={onClick}
+        ref={ref}
+      />
+    );
   }
 
-  render() {
-    const { dataUrl } = this.state;
-    if (dataUrl !== null) {
-      return (
-        <img
-          src={dataUrl}
-          alt={this.props.file.name}
-          className={`${css.preview}${
-            this.props.selected ? ` ${css.selected}` : ""
-          }`}
-          onClick={this.props.onClick}
-        />
-      );
-    }
-    if (isWebSafeImage(this.props.file.type)) {
-      return <Loader />;
-    }
-    return <span className={css.cannotDisplay}>?</span>;
+  if (isWebSafeImage(file.type)) {
+    return <Loader ref={ref} />;
   }
-}
+
+  return (
+    <span ref={ref} className={css.cannotDisplay}>
+      ?
+    </span>
+  );
+};
+
+ImagePreview.defaultProps = {
+  selected: false,
+  onClick: undefined,
+};
+
+export default ImagePreview;
