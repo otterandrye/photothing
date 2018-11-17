@@ -2,7 +2,7 @@
 
 import * as React from "react";
 
-type Props = {| +id: string, +photoId: string | null |};
+type Props = {| +id: number, +photoId: string | null |};
 
 export default (props: Props) => {
   const details = props.photoId || "from the top";

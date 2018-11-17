@@ -11,6 +11,7 @@ import SignUp from "./auth/SignUp";
 import ForgotPassword from "./auth/ForgotPassword";
 import ResetPassword from "./auth/ResetPassword";
 import Album from "./Album";
+import Albums from "./Albums";
 import Menu from "./Menu";
 import Modals from "./Modals";
 
@@ -26,6 +27,10 @@ const App = ({ route, isAuthenticated }: Props) => (
         <Menu />
         <div className={styles.content}>
           {route.page === "LIBRARY" && <Library />}
+          {route.page === "ALBUMS" && <Albums />}
+          {route.page === "ALBUM" && (
+            <Album id={route.albumId} photoId={route.photoId} />
+          )}
         </div>
       </React.Fragment>
     )}
@@ -34,9 +39,6 @@ const App = ({ route, isAuthenticated }: Props) => (
     {route.page === "FORGOT_PASSWORD" && <ForgotPassword />}
     {route.page === "RESET_PASSWORD" && (
       <ResetPassword email={route.email} id={route.id} />
-    )}
-    {route.page === "ALBUM" && (
-      <Album id={route.albumId} photoId={route.photoId} />
     )}
     <Modals />
   </React.Fragment>

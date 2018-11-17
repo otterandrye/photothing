@@ -32,7 +32,7 @@ type NotFound = {|
 
 type Album = {|
   page: "ALBUM",
-  albumId: string,
+  albumId: number,
   photoId: string | null,
 |};
 
@@ -82,7 +82,7 @@ export const parseRoute = (path: string): Route => {
     return {
       page: "ALBUM",
       // $FlowFixMe: Flow can't tell that this is required.
-      albumId: params.get("id"),
+      albumId: parseInt(params.get("id"), 10),
       photoId: params.get("photoId") || null,
     };
   }
