@@ -21,11 +21,14 @@ export default (props: Props) => (
         const link = `/view/${props.gallery.hash}`;
         return (
           <div>
-            <div>Album name: {data.name}</div>
             <div>
-              <span>Gallery link</span>
+              Album name: {data.name}, album id: {props.gallery.album_id},
+              contains {data.photos.items.length} photos
+            </div>
+            <div>
+              <span>Gallery link: </span>
               <a href={link} target="_blank" rel="noreferrer noopener">
-                permanent link
+                html link (TODO)
               </a>
             </div>
           </div>
