@@ -17,7 +17,7 @@ type Album = {|
 |};
 type Props = {| +album: Album, +navigate: Route => void |};
 
-export type { Album };
+export type { Album, AlbumEntry };
 
 const AlbumPreview = (props: Props) => (
   <div>

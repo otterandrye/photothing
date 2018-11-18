@@ -22,6 +22,10 @@ type Albums = {|
   page: "ALBUMS",
 |};
 
+type Galleries = {|
+  page: "GALLERIES",
+|};
+
 type SignUp = {|
   page: "SIGNUP",
 |};
@@ -44,6 +48,7 @@ export type Route =
   | SignUp
   | Album
   | Albums
+  | Galleries
   | NotFound;
 
 export const parseRoute = (path: string): Route => {
@@ -91,6 +96,11 @@ export const parseRoute = (path: string): Route => {
       page: "ALBUMS",
     };
   }
+  if (root === "/galleries") {
+    return {
+      page: "GALLERIES",
+    };
+  }
   return {
     page: "LIBRARY",
   };
@@ -121,6 +131,9 @@ export const getPath = (route: Route) => {
   }
   if (route.page === "ALBUMS") {
     return "/albums";
+  }
+  if (route.page === "GALLERIES") {
+    return "/galleries";
   }
   return "/";
 };

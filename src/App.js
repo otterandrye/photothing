@@ -12,6 +12,7 @@ import ForgotPassword from "./auth/ForgotPassword";
 import ResetPassword from "./auth/ResetPassword";
 import Album from "./Album";
 import Albums from "./Albums";
+import Galleries from "./Galleries";
 import Menu from "./Menu";
 import Modals from "./Modals";
 
@@ -31,6 +32,7 @@ const App = ({ route, isAuthenticated }: Props) => (
           {route.page === "ALBUM" && (
             <Album id={route.albumId} photoId={route.photoId} />
           )}
+          {route.page === "GALLERIES" && <Galleries />}
         </div>
       </React.Fragment>
     )}

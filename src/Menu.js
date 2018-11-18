@@ -32,6 +32,11 @@ const Menu = ({ page, email, logout, navigate, pushModal }: Props) => {
       navigate({ page: "ALBUMS" });
     }
   };
+  const galleriesAction = () => {
+    if (page !== "GALLERIES") {
+      navigate({ page: "GALLERIES" });
+    }
+  };
   return (
     <div className={styles.menuSizing}>
       <div className={`${styles.menu} ${styles.menuSizing}`}>
@@ -57,6 +62,14 @@ const Menu = ({ page, email, logout, navigate, pushModal }: Props) => {
               <Action label="Albums" keybinding="a" do={albumsAction} />
               <span className={styles.description}>Show off your work</span>
             </li>
+            <li
+              className={page === "GALLERIES" ? styles.active : undefined}
+              onClick={galleriesAction}
+            >
+              <Action label="Galleries" keybinding="g" do={galleriesAction} />
+              <span className={styles.description}>Share your work</span>
+            </li>
+
             <FilePicker
               accept={["image/jpeg", "image/x-adobe-dng"]}
               onSelect={files => {
