@@ -4,7 +4,7 @@ before_install:
   - curl -sSf https://build.travis-ci.org/files/rustup-init.sh | sh -s -- --default-toolchain=nightly -y
   - export PATH="$HOME/.cargo/bin:$PATH"
   - rustup target add wasm32-unknown-unknown
-  - cargo +nightly install wasm-bindgen-cli --version 0.2.14
+  - cargo +nightly install wasm-bindgen-cli --version 0.2.28
 
 language: node_js
 node_js:

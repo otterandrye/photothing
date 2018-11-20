@@ -1,4 +1,4 @@
-#![feature(use_extern_macros)]
+#![feature(nll)]
 
 extern crate wasm_bindgen;
 use wasm_bindgen::prelude::*;
@@ -79,9 +79,9 @@ impl Preview {
 
     	for ifd in &dng.ifds {
 			match ifd.get(&IfdEntryTag::TileOffsets) {
-				Some(IfdEntryValue::Offset(_entry_type, count, offset)) => {	
+				Some(IfdEntryValue::Offset(_entry_type, count, offset)) => {
 					if *count != 425 {
-						// There are other IFDs here I don't care about. 
+						// There are other IFDs here I don't care about.
 						// In the future, I should check the Subtype.
 						return;
 					}
