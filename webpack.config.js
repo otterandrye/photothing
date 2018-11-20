@@ -1,3 +1,5 @@
+/* eslint-disable flowtype/require-valid-file-annotation */
+
 const path = require('path');
 const webpack = require('webpack');
 const nodeExternals = require('webpack-node-externals');
@@ -123,5 +125,25 @@ module.exports = [
       new MiniCssExtractPlugin()
     ],
     devtool: 'source-map',
-	}
+	},
+  {
+		entry: './src/public_gallery/client.js',
+    resolve,
+    module: {
+      rules: clientRules,
+    },
+		output: {
+			filename: 'gallery-client.js',
+			path: path.resolve(__dirname, 'dist'),
+      publicPath: 'static/',
+		},
+    plugins: [
+      ...plugins,
+      new webpack.DefinePlugin({
+        'SERVER': JSON.stringify(false),
+      }),
+      new MiniCssExtractPlugin()
+    ],
+    devtool: 'source-map',
+	},
 ];

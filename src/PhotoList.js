@@ -40,4 +40,6 @@ PhotoList.defaultProps = {
   onSelect: () => {},
 };
 
+export type { Photo };
+
 export default PhotoList;

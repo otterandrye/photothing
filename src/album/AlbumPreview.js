@@ -6,10 +6,15 @@ import { connect } from "react-redux";
 import { navigate } from "../State";
 import type { Route } from "../routes";
 import type { Page } from "../Pagination";
+import type { Photo } from "../PhotoList";
 
 import PublishAlbum from "./PublishAlbum";
 
-type AlbumEntry = {| caption: ?string |};
+type AlbumEntry = {|
+  caption: ?string,
+  ordering: ?number,
+  photo: Photo,
+|};
 type Album = {|
   +id: number,
   +name: string,
