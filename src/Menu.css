@@ -6,7 +6,6 @@
 
 .menu {
   position: fixed;
-  display: flex;
   background-color: #303030;
   text-align: center;
   padding: 1rem;
@@ -41,13 +40,13 @@
 }
 
 .nav li {
-  display: flex;
   margin: 0.25rem -1rem;
   font-weight: 100;
   text-align: left;
   padding: 0 1.5rem;
   cursor: pointer;
   flex-wrap: wrap;
+  flex-direction: row;
 }
 
 .nav li:hover {

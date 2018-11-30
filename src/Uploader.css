@@ -1,23 +1,23 @@
 .preview {
   flex: 0 0 auto;
-  display: flex;
+  flex-direction: row;
   background-color: black;
   overflow-x: scroll;
 }
 
 .action {
-  display: flex;
   line-height: 2.5rem;
   color: #b3b3b3;
+  flex-direction: row;
 }
 
 .pane {
   flex: 0 0 auto;
-  display: flex;
   justify-content: space-between;
 }
 
 .previewFrame {
+  flex: 1 0;
   overflow: hidden;
   text-align: center;
   padding: 1rem;

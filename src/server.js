@@ -14,6 +14,7 @@ const server = express();
 
 // heroku handles ssl termination, check headers for the original scheme
 if (process.env.NODE_ENV === "production") {
+  console.log("Yo we're redirecting.");
   server.use((req, res, next) => {
     res.setHeader(
       "Strict-Transport-Security",

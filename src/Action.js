@@ -26,13 +26,13 @@ class Action extends React.Component<Props, {| highlight: boolean |}> {
   componentDidMount() {
     document.addEventListener("keydown", this.downListener, false);
     document.addEventListener("keyup", this.upListener, false);
-    document.addEventListener("keypress", this.bindingListener, false);
+    document.addEventListener("keyup", this.bindingListener, false);
   }
 
   componentWillUnmount() {
     document.removeEventListener("keyup", this.upListener, false);
     document.removeEventListener("keydown", this.downListener, false);
-    document.removeEventListener("keypress", this.bindingListener, false);
+    document.removeEventListener("keyup", this.bindingListener, false);
   }
 
   downListener = (evt: KeyboardEvent) => {
