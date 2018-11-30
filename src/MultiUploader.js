@@ -35,11 +35,10 @@ class MultiUploader extends React.Component<Props, State> {
     fetch(`${api}/api/upload`, {
       method: "POST",
       headers,
-      // $FlowFixMe: TODO: How do we post JSON via fetch?
-      body: {
+      body: JSON.stringify({
         filename: file.name,
         file_type: file.type,
-      },
+      }),
     })
       .then(res => res.json())
       .then(pendingUpload => pendingUpload.upload.url);

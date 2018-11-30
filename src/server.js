@@ -65,7 +65,7 @@ server.get("/view/:hash/", (req, res) => {
           serverSideRender(res)(
             <GalleryPage
               scripts={["static/gallery-client.js"]}
-              styles={["static/main.css"]}
+              styles={["static/gallery.css"]}
               api={API_SERVER}
               album={json}
               hash={hash}
