@@ -53,7 +53,8 @@ const serverRules = rules.concat([{
     {
       loader: "css-loader/locals",
       options: {
-        modules: true
+        modules: true,
+        localIdentName: '[name]_[local]-[hash:base64:5]'
       }
     },
     //'postcss-loader',
@@ -67,7 +68,8 @@ const clientRules = rules.concat([{
     {
       loader: "css-loader",
       options: {
-        modules: true
+        modules: true,
+        localIdentName: '[name]_[local]-[hash:base64:5]'
       }
     },
     //'postcss-loader',
