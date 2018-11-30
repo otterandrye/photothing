@@ -142,7 +142,7 @@ module.exports = [
       new webpack.DefinePlugin({
         'SERVER': JSON.stringify(false),
       }),
-      new MiniCssExtractPlugin()
+      new MiniCssExtractPlugin({filename: "gallery.css"})
     ],
     devtool: 'source-map',
 	},
