@@ -1,0 +1,20 @@
+:root {
+  --primary: #ec4e20;
+  --name: #a3320b;
+  --app-bg-color: #7b7b7b;
+  --app-menu-color: #303030;
+  --menu-text: #b3b3b3;
+}
+
+* {
+  box-sizing: border-box;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  display: flex;
+}

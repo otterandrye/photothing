@@ -1,7 +1,39 @@
+body {
+  background-color: #eee;
+}
+
+.title {
+  text-align: center;
+}
+
+.gallery-page {
+  padding: 40px;
+}
+
 .container {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
+  justify-content: center;
+}
 
-  background-color: red;
+.item {
+  margin: 5px;
+}
+
+.pic {
+  width: 400px;
+  object-fit: contain;
+}
+
+@media (min-width: 950px) and (max-width: 1255px) {
+  .pic {
+    width: 300px;
+  }
+}
+
+@media (min-width: 500px) and (max-width: 840px) {
+  .pic {
+    width: 500px;
+  }
 }

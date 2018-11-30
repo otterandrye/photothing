@@ -3,6 +3,8 @@
 import * as React from "react";
 import { type Album } from "../album/AlbumPreview";
 import Gallery from "./Gallery";
+// eslint-disable-next-line
+import css from "../Page.css"; // shared between both apps
 
 type Manifest = {|
   +styles: string[],

@@ -7,6 +7,8 @@ import App from "./App";
 import History from "./History";
 import Authenticator from "./Authenticator";
 import { reducer, type State, type Action } from "./State";
+// eslint-disable-next-line
+import css from "./Page.css";
 
 type Manifest = {|
   +styles: string[],
