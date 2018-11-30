@@ -15,7 +15,7 @@
 .indicator.revealed {
   padding: 0 4px;
   color: #b3b3b3;
-  flex: 1;
+  flex: 0 0 2rem;
 }
 
 .label {
