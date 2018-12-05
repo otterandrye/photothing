@@ -8,7 +8,7 @@ import Action from "./Action";
 import styles from "./Uploader.css";
 
 type FileState = {|
-  status: "INITIAL" | "QUEUED" | "UPLOADING" | "UPLOADED",
+  status: "INITIAL" | "QUEUED" | "UPLOADING" | "UPLOADED" | "FAILED",
   progress: number,
 |};
 
@@ -22,6 +22,7 @@ const uploadFile = (
   headers: { [string]: string },
   file: File,
   mark: number => void,
+  failer: () => void,
 ) => {
   mark(0);
   fetch(`${api}/api/upload`, {
@@ -40,7 +41,9 @@ const uploadFile = (
         xhr.upload.addEventListener(
           "progress",
           (evt: ProgressEvent) => {
-            mark(evt.loaded / evt.total);
+            if (evt.lengthComputable) {
+              mark(evt.loaded / evt.total);
+            }
           },
           false,
         );
@@ -49,6 +52,8 @@ const uploadFile = (
           if (xhr.readyState === 4) {
             if (xhr.status === 200) {
               mark(1);
+            } else {
+              failer();
             }
           }
         };
@@ -56,6 +61,7 @@ const uploadFile = (
       },
       e => {
         console.error(`Upload failed: '${e}'`);
+        failer();
       },
     );
 };
@@ -92,8 +98,8 @@ class Uploader extends React.Component<
     });
   };
 
-  select = (idx: number) => () => {
-    this.setState({ selected: this.props.files[idx] });
+  select = (file: File) => () => {
+    this.setState({ selected: file });
   };
 
   marker = file => percentage => {
@@ -118,12 +124,28 @@ class Uploader extends React.Component<
     });
   };
 
+  failer = file => () => {
+    this.setState(state => {
+      const statuses = new Map(state.statuses.entries());
+
+      statuses.set(file, {
+        status: "FAILED",
+        progress: 0,
+      });
+
+      return {
+        statuses,
+      };
+    });
+  };
+
   upload = () => {
     uploadFile(
       this.props.api,
       this.props.headers,
       this.state.selected,
       this.marker(this.state.selected),
+      this.failer(this.state.selected),
     );
   };
 
@@ -135,16 +157,17 @@ class Uploader extends React.Component<
     const uploaded = entries.filter(entry => entry[1].status === "UPLOADED")
       .length;
     const queued = entries.filter(entry => entry[1].status === "QUEUED").length;
+    const failed = entries.filter(entry => entry[1].status === "FAILED").length;
 
     return (
       <React.Fragment>
         <div className={styles.preview}>
-          {files.map((file, idx) => (
+          {files.map(file => (
             <ImageFrame key={file.name}>
-              {idx === this.state.selected ? (
+              {file === this.state.selected ? (
                 <ImagePreview file={file} selected />
               ) : (
-                <ImagePreview file={file} onClick={this.select(idx)} />
+                <ImagePreview file={file} onClick={this.select(file)} />
               )}
             </ImageFrame>
           ))}
@@ -172,11 +195,22 @@ class Uploader extends React.Component<
             <div className={styles.action}>
               <Action label="Dismiss" keybinding="d" do={this.upload} />
             </div>
-            <div>
-              {inProgress &&
-                `Uploading ${inProgress[0].name}: ${inProgress[1].progress}%`}
+            <div className={styles.status}>
+              {inProgress && (
+                <React.Fragment>
+                  Uploading {inProgress[0].name}
+                  <span
+                    className={styles.progress}
+                    style={{ width: `${inProgress[1].progress}%` }}
+                  />
+                  <br />
+                </React.Fragment>
+              )}
+              {uploaded} Uploaded
               <br />
-              {uploaded} Uploaded | {queued} Queued
+              {queued} Queued
+              <br />
+              {failed > 0 ? `${failed} Failed` : ""}
             </div>
           </div>
         </div>

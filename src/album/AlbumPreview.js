@@ -6,14 +6,14 @@ import { connect } from "react-redux";
 import { navigate } from "../State";
 import type { Route } from "../routes";
 import type { Page } from "../Pagination";
-import type { Photo } from "../PhotoList";
+import type { PhotoInfo } from "../PhotoList";
 
 import PublishAlbum from "./PublishAlbum";
 
 type AlbumEntry = {|
   caption: ?string,
   ordering: ?number,
-  photo: Photo,
+  photo: PhotoInfo,
 |};
 type Album = {|
   +id: number,

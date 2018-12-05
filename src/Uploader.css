@@ -27,3 +27,21 @@
   flex-direction: row;
   flex: 1;
 }
+
+.status {
+  border-radius: 1px;
+  margin: 0.5rem;
+  padding: 0.5rem;
+  background-color: #282828;
+  color: #b3b3b3;
+  font-weight: 100;
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+.progress {
+  background-color: #b3b3b3;
+  color: #282828;
+  font-weight: bold;
+  text-align: center;
+}

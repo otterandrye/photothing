@@ -2,15 +2,17 @@
 
 import * as React from "react";
 import Api, { type RequestState } from "./Api";
+import Photo from "./Photo";
+import styles from "./PhotoList.css";
 
-type Photo = {|
+export type PhotoInfo = {|
   +id: string,
   +uuid: string,
   +url: string,
   +attributes: { filename: string },
 |};
 type PhotosApiResponse = {|
-  +items: Array<Photo>,
+  +items: Array<PhotoInfo>,
 |};
 
 type Props = {|
@@ -22,11 +24,11 @@ const PhotoList = (props: Props) => (
     {({ data }: RequestState<PhotosApiResponse>) => {
       if (data) {
         return data.items.map(photo => (
-          <img
+          <Photo
             src={photo.url}
             alt={photo.uuid}
-            width="250"
             key={photo.uuid}
+            className={styles.photo}
             onClick={() => props.onSelect(photo.id)}
           />
         ));
@@ -39,7 +41,5 @@ const PhotoList = (props: Props) => (
 PhotoList.defaultProps = {
   onSelect: () => {},
 };
-
-export type { Photo };
 
 export default PhotoList;
